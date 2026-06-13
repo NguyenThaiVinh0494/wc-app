@@ -170,6 +170,115 @@ const renderFlag = (teamName: string, emoji: string, className: string = "w-5 h-
   return <span className="select-none">{emoji}</span>;
 }
 
+const BracketLines: React.FC<{ winners: { [k: string]: number | null } }> = ({ winners }) => {
+  const [paths, setPaths] = useState<{ d: string; isActive: boolean }[]>([])
+
+  useEffect(() => {
+    const container = document.getElementById('bracket-container')
+    if (!container) return
+
+    const updateLines = () => {
+      const rect = container.getBoundingClientRect()
+      const getBoxEdge = (matchId: string, edge: 'left' | 'right') => {
+        const el = container.querySelector(`[data-match-id="${matchId}"]`)
+        if (!el) return null
+        const elRect = el.getBoundingClientRect()
+        const x = edge === 'left' ? elRect.left - rect.left : elRect.right - rect.left
+        const y = elRect.top - rect.top + elRect.height / 2
+        return { x, y }
+      }
+
+      const flowConnections: { target: string; source: string; side: 'left' | 'right' }[] = [
+        // Col 2 targets (Left side)
+        { target: 'm17', source: 'm2', side: 'right' },
+        { target: 'm17', source: 'm5', side: 'right' },
+        { target: 'm18', source: 'm1', side: 'right' },
+        { target: 'm18', source: 'm3', side: 'right' },
+        { target: 'm19', source: 'm4', side: 'right' },
+        { target: 'm19', source: 'm6', side: 'right' },
+        { target: 'm20', source: 'm7', side: 'right' },
+        { target: 'm20', source: 'm8', side: 'right' },
+
+        // Col 3 targets (Left side)
+        { target: 'm25', source: 'm17', side: 'right' },
+        { target: 'm25', source: 'm18', side: 'right' },
+        { target: 'm26', source: 'm19', side: 'right' },
+        { target: 'm26', source: 'm20', side: 'right' },
+
+        // Col 4 targets (Left side)
+        { target: 'm29', source: 'm25', side: 'right' },
+        { target: 'm29', source: 'm26', side: 'right' },
+
+        // Col 8 targets (Right side)
+        { target: 'm21', source: 'm11', side: 'left' },
+        { target: 'm21', source: 'm12', side: 'left' },
+        { target: 'm22', source: 'm9', side: 'left' },
+        { target: 'm22', source: 'm10', side: 'left' },
+        { target: 'm23', source: 'm14', side: 'left' },
+        { target: 'm23', source: 'm16', side: 'left' },
+        { target: 'm24', source: 'm13', side: 'left' },
+        { target: 'm24', source: 'm15', side: 'left' },
+
+        // Col 7 targets (Right side)
+        { target: 'm27', source: 'm21', side: 'left' },
+        { target: 'm27', source: 'm22', side: 'left' },
+        { target: 'm28', source: 'm23', side: 'left' },
+        { target: 'm28', source: 'm24', side: 'left' },
+
+        // Col 6 targets (Right side)
+        { target: 'm30', source: 'm27', side: 'left' },
+        { target: 'm30', source: 'm28', side: 'left' },
+
+        // Finals target from Col 4 and Col 6 (m32 is center)
+        { target: 'm32', source: 'm29', side: 'right' },
+        { target: 'm32', source: 'm30', side: 'left' },
+        
+        // Third place target
+        { target: 'm31', source: 'm29', side: 'right' },
+        { target: 'm31', source: 'm30', side: 'left' }
+      ]
+
+      const newPaths: { d: string; isActive: boolean }[] = []
+      flowConnections.forEach(({ target, source, side }) => {
+        const start = getBoxEdge(source, side === 'right' ? 'right' : 'left')
+        const end = getBoxEdge(target, side === 'right' ? 'left' : 'right')
+
+        if (start && end) {
+          const isActive = winners[source] !== null && winners[source] !== undefined
+          const xMid = (start.x + end.x) / 2
+          const d = `M ${start.x} ${start.y} L ${xMid} ${start.y} L ${xMid} ${end.y} L ${end.x} ${end.y}`
+          newPaths.push({ d, isActive })
+        }
+      })
+
+      setPaths(newPaths)
+    }
+
+    const timer = setTimeout(updateLines, 150)
+    window.addEventListener('resize', updateLines)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', updateLines)
+    }
+  }, [winners])
+
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+      {paths.map((p, idx) => (
+        <path
+          key={idx}
+          d={p.d}
+          fill="none"
+          stroke={p.isActive ? '#0d9488' : '#e2e8f0'}
+          strokeWidth={p.isActive ? 2.5 : 1.5}
+          className="transition-all duration-300"
+        />
+      ))}
+    </svg>
+  )
+}
+
 const initialR32Teams: { [k: string]: string } = {
   m1_t1: 'Nhì Bảng A', m1_t2: 'Nhì Bảng B',
   m2_t1: 'Nhất Bảng E', m2_t2: 'Hạng 3 A/B/C/D/F',
@@ -386,7 +495,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 flex flex-col gap-12 text-white animate-slide-up">
       {/* Hero Banner */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#1e2354] via-[#12132b] to-[#251b4f] p-8 md:p-12 border border-white/10 shadow-2xl flex flex-col items-center text-center gap-6">
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#1e2354] via-[#12132b] to-[#251b4f] p-8 md:p-12 border border-white/10 shadow-2xl flex flex-col items-center text-center gap-6 animate-powerpoint-hero">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.15),transparent_60%)]"></div>
         
         <div className="relative px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-black tracking-widest uppercase animate-pulse">
@@ -430,7 +539,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
           { label: 'Chủ nhà', val: '3', desc: 'Mỹ, Canada, Mexico', color: 'from-yellow-400 to-orange-500' },
           { label: 'Ngày hội', val: '39', desc: 'Ngày tranh tài rực lửa', color: 'from-pink-400 to-rose-500' },
         ].map((stat, idx) => (
-          <div key={idx} className="glass-card rounded-2xl p-5 flex flex-col items-center text-center">
+          <div key={idx} className={`glass-card rounded-2xl p-5 flex flex-col items-center text-center animate-stagger delay-${(idx + 1) * 100}`}>
             <span className={`text-3xl md:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r ${stat.color}`}>{stat.val}</span>
             <span className="text-xs font-bold text-white uppercase tracking-wider mt-1">{stat.label}</span>
             <span className="text-[10px] text-gray-400 font-medium mt-0.5">{stat.desc}</span>
@@ -497,7 +606,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
             { name: 'Báo Hoa Mai (Leopard)', country: 'Mexico', flag: '🇲🇽', desc: 'Đại diện cho tốc độ xé gió, sự dũng mãnh huyền thoại và di sản văn hóa Maya/Aztec đầy huyền bí, rực rỡ sắc màu của đất nước Mexico.', icon: '🐆', color: 'from-green-500/10 to-transparent border-green-500/20' },
             { name: 'Đại Bàng (Eagle)', country: 'Mỹ', flag: '🇺🇸', desc: 'Đại diện cho tầm nhìn cao rộng kiêu hãnh, ý chí tự do phóng khoáng và sức mạnh khát vọng dẫn đầu của tinh thần thể thao nước Mỹ.', icon: '🦅', color: 'from-blue-500/10 to-transparent border-blue-500/20' }
           ].map((m, idx) => (
-            <div key={idx} className={`glass-card bg-gradient-to-b ${m.color} rounded-2xl p-6 flex flex-col items-center text-center gap-3`}>
+            <div key={idx} className={`glass-card bg-gradient-to-b ${m.color} rounded-2xl p-6 flex flex-col items-center text-center gap-3 animate-stagger delay-${(idx + 5) * 100}`}>
               <span className="text-5xl animate-pulse select-none">{m.icon}</span>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-sm uppercase tracking-wide text-slate-800">{m.name}</span>
@@ -518,7 +627,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
             { city: 'Mexico City', stadium: 'Sân vận động Azteca', capacity: '87,523 chỗ ngồi', note: 'Sân đầu tiên đăng cai 3 kỳ World Cup', icon: '🏟️' },
             { city: 'Toronto', stadium: 'Sân vận động BMO Field', capacity: '45,000 chỗ ngồi', note: 'Trọng điểm bóng đá quốc gia lá phong', icon: '🍁' }
           ].map((stadium, idx) => (
-            <div key={idx} className="glass-card rounded-2xl p-5 flex flex-col gap-2">
+            <div key={idx} className={`glass-card rounded-2xl p-5 flex flex-col gap-2 animate-stagger delay-${(idx + 8) * 100}`}>
               <div className="flex items-center justify-between">
                 <span className="font-extrabold text-xs text-white uppercase tracking-wider">{stadium.city}</span>
                 <span className="text-xl select-none">{stadium.icon}</span>
@@ -1120,7 +1229,7 @@ export default function App(): JSX.Element {
     const isAdmin = role === 'admin'
 
     return (
-      <div className={`w-36 rounded overflow-hidden border ${colorClass} shadow-lg text-xs transition-all duration-300 hover:scale-105`}>
+      <div data-match-id={matchId} className={`w-36 rounded overflow-hidden border ${colorClass} shadow-lg text-xs transition-all duration-300 hover:scale-105`}>
         <div className="text-center font-bold text-[10px] py-1 bg-black/5 uppercase tracking-wider border-b border-inherit">{title}</div>
 
         <div 
@@ -1440,7 +1549,7 @@ export default function App(): JSX.Element {
               </div>
               <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {calculatedGroups.map((group, gIdx) => (
-                  <div key={gIdx} className="glass-card rounded-lg overflow-hidden shadow-xl">
+                  <div key={gIdx} className={`glass-card rounded-lg overflow-hidden shadow-xl animate-card-pop delay-${gIdx * 50}`}>
                     <div className="text-white font-bold text-lg py-3 px-4 border-b border-gray-700 bg-gray-800/80">Bảng {String.fromCharCode(65 + gIdx)}</div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm text-left text-gray-300 whitespace-nowrap">
@@ -1547,9 +1656,8 @@ export default function App(): JSX.Element {
                       const t1Info = TEAMS_INFO[m.team1]
                       return t1Info && t1Info.group === groupLetter
                     })
-                    
-                    return (
-                      <div key={groupLetter} className="glass-card rounded-2xl p-4 flex flex-col gap-3">
+                                        return (
+                        <div key={groupLetter} className={`glass-card rounded-2xl p-4 flex flex-col gap-3 animate-card-pop delay-${gIdx * 50}`}>
                         <div className="font-extrabold text-sm border-b border-gray-800 pb-2 text-teal-400 flex justify-between items-center tracking-wider">
                           <span>BẢNG {groupLetter}</span>
                           <span className="text-[9px] text-gray-400 font-bold bg-gray-800 px-2 py-0.5 rounded-full">6 trận đấu</span>
@@ -1590,8 +1698,8 @@ export default function App(): JSX.Element {
               ) : (
                 /* Date View */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {getGroupedMatchesForColumn(groupMatches).map((group, idx) => (
-                    <div key={group.dateKey} className="glass-card rounded-2xl p-4 flex flex-col gap-3">
+                    {getGroupedMatchesForColumn(groupMatches).map((group, idx) => (
+                      <div key={group.dateKey} className={`glass-card rounded-2xl p-4 flex flex-col gap-3 animate-card-pop delay-${idx * 50}`}>
                       <div className="bg-[#137a3e] text-[#f8e025] font-black text-center py-1.5 rounded-lg text-xs uppercase tracking-wider shadow-md border border-[#1b8c4a]">
                         {group.dayOfWeek} - Ngày {group.date}
                       </div>
@@ -1633,7 +1741,7 @@ export default function App(): JSX.Element {
                   ))}
                   
                   {/* Mascot footer at the end of Date View */}
-                  <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 text-center h-full min-h-[180px]">
+                  <div className={`glass-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 text-center h-full min-h-[180px] animate-card-pop delay-${getGroupedMatchesForColumn(groupMatches).length * 50}`}>
                     <div className="text-4xl animate-bounce select-none">🦌 🐆 🦅</div>
                     <div className="text-[10px] tracking-widest text-gray-400 font-bold uppercase">Mascots chính thức</div>
                     <div className="text-xs text-yellow-400 font-extrabold">UNITED 2026</div>
@@ -1663,23 +1771,24 @@ export default function App(): JSX.Element {
                 )}
               </div>
 
-              <div className="overflow-x-auto pb-8">
-                <div className="min-w-[1400px] flex justify-between gap-4 py-4 relative">
-                  <div className="flex flex-col justify-around gap-2 w-36">{LAYOUT.col1.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-8">{LAYOUT.col2.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-24">{LAYOUT.col3.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-48">{LAYOUT.col4.map(id => <MatchBox key={id} matchId={id} />)}</div>
+              <div className="overflow-x-auto pb-8 relative">
+                <div className="min-w-[1400px] flex justify-between gap-4 py-4 relative" id="bracket-container">
+                  <BracketLines winners={winners} />
+                  <div className="flex flex-col justify-around gap-2 w-36 animate-ko-slide-left">{LAYOUT.col1.map(id => <MatchBox key={id} matchId={id} />)}</div>
+                  <div className="flex flex-col justify-around gap-2 w-36 py-8 animate-ko-slide-left delay-200">{LAYOUT.col2.map(id => <MatchBox key={id} matchId={id} />)}</div>
+                  <div className="flex flex-col justify-around gap-2 w-36 py-24 animate-ko-slide-left delay-400">{LAYOUT.col3.map(id => <MatchBox key={id} matchId={id} />)}</div>
+                  <div className="flex flex-col justify-around gap-2 w-36 py-48 animate-ko-slide-left delay-600">{LAYOUT.col4.map(id => <MatchBox key={id} matchId={id} />)}</div>
 
-                  <div className="flex flex-col justify-center items-center gap-12 w-48 relative">
+                  <div className="flex flex-col justify-center items-center gap-12 w-48 relative animate-ko-pop-center delay-800">
                     <div className="flex flex-col items-center"><MatchBox matchId="m31" /></div>
                     <div className="text-6xl drop-shadow-[0_0_30px_rgba(250,204,21,0.8)] animate-pulse my-4">🏆</div>
                     <div className="flex flex-col items-center transform scale-110"><div className="absolute inset-0 bg-yellow-500/20 blur-xl rounded-full"></div><div className="relative z-10"><MatchBox matchId="m32" /></div></div>
                   </div>
 
-                  <div className="flex flex-col justify-around gap-2 w-36 py-48">{LAYOUT.col6.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-24">{LAYOUT.col7.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-8">{LAYOUT.col8.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36">{LAYOUT.col9.map(id => <MatchBox key={id} matchId={id} />)}</div>
+                  <div className="flex flex-col justify-around gap-2 w-36 py-48 animate-ko-slide-right delay-600">{LAYOUT.col6.map(id => <MatchBox key={id} matchId={id} />)}</div>
+                  <div className="flex flex-col justify-around gap-2 w-36 py-24 animate-ko-slide-right delay-400">{LAYOUT.col7.map(id => <MatchBox key={id} matchId={id} />)}</div>
+                  <div className="flex flex-col justify-around gap-2 w-36 py-8 animate-ko-slide-right delay-200">{LAYOUT.col8.map(id => <MatchBox key={id} matchId={id} />)}</div>
+                  <div className="flex flex-col justify-around gap-2 w-36 animate-ko-slide-right">{LAYOUT.col9.map(id => <MatchBox key={id} matchId={id} />)}</div>
                 </div>
               </div>
             </div>
