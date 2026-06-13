@@ -270,8 +270,8 @@ const BracketLines: React.FC<{ winners: { [k: string]: number | null } }> = ({ w
           key={idx}
           d={p.d}
           fill="none"
-          stroke={p.isActive ? '#0d9488' : '#e2e8f0'}
-          strokeWidth={p.isActive ? 2.5 : 1.5}
+          stroke={p.isActive ? '#0f766e' : '#cbd5e1'} /* Darker Teal for active, Slate 300 for inactive */
+          strokeWidth={p.isActive ? 3.5 : 2.0} /* Thicker lines */
           className="transition-all duration-300"
         />
       ))}
