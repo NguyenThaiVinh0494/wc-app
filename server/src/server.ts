@@ -123,6 +123,57 @@ app.post('/api/reset', (req, res) => {
   }
 })
 
+// 6. Bulk sync tournament state from frontend (useful for restoring state on ephemeral containers)
+app.post('/api/sync', (req, res) => {
+  const { groups, matches, knockout } = req.body
+
+  try {
+    const db = readDb()
+
+    if (groups && Array.isArray(groups)) {
+      for (let g = 0; g < db.groups.length; g++) {
+        if (!groups[g]) continue
+        for (let t = 0; t < db.groups[g].length; t++) {
+          if (typeof groups[g][t] === 'string') {
+            db.groups[g][t].name = groups[g][t]
+          }
+        }
+      }
+    }
+
+    if (matches && Array.isArray(matches)) {
+      matches.forEach((m: any) => {
+        const idx = db.matches.findIndex(dm => dm.id === m.id)
+        if (idx !== -1) {
+          db.matches[idx].score1 = m.score1 !== null ? Number(m.score1) : null
+          db.matches[idx].score2 = m.score2 !== null ? Number(m.score2) : null
+        }
+      })
+    }
+
+    if (knockout) {
+      if (knockout.baseTeams) {
+        db.knockout.baseTeams = {
+          ...db.knockout.baseTeams,
+          ...knockout.baseTeams
+        }
+      }
+      if (knockout.winners) {
+        db.knockout.winners = {
+          ...db.knockout.winners,
+          ...knockout.winners
+        }
+      }
+    }
+
+    writeDb(db)
+    res.json({ success: true, state: db })
+  } catch (error) {
+    console.error('Error syncing database:', error)
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
+})
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const FRONTEND_BUILD_PATH = path.join(__dirname, '../../dist')

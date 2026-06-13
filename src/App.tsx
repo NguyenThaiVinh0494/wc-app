@@ -480,12 +480,22 @@ export default function App(): JSX.Element {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
   const [fixtureView, setFixtureView] = useState<'date' | 'group'>('group')
 
-  const [groupNames, setGroupNames] = useState<string[][]>(() => 
-    initialGroups.map(g => g.map(t => t.name))
-  )
-  const [groupMatches, setGroupMatches] = useState<GroupMatch[]>(initialGroupMatches)
-  const [baseTeams, setBaseTeams] = useState<{ [k: string]: string }>(initialR32Teams)
-  const [winners, setWinners] = useState<{ [k: string]: number | null }>({})
+  const [groupNames, setGroupNames] = useState<string[][]>(() => {
+    const saved = localStorage.getItem('wc2026_groupNames')
+    return saved ? JSON.parse(saved) : initialGroups.map(g => g.map(t => t.name))
+  })
+  const [groupMatches, setGroupMatches] = useState<GroupMatch[]>(() => {
+    const saved = localStorage.getItem('wc2026_groupMatches')
+    return saved ? JSON.parse(saved) : initialGroupMatches
+  })
+  const [baseTeams, setBaseTeams] = useState<{ [k: string]: string }>(() => {
+    const saved = localStorage.getItem('wc2026_baseTeams')
+    return saved ? JSON.parse(saved) : initialR32Teams
+  })
+  const [winners, setWinners] = useState<{ [k: string]: number | null }>(() => {
+    const saved = localStorage.getItem('wc2026_winners')
+    return saved ? JSON.parse(saved) : {}
+  })
   const [editingMatch, setEditingMatch] = useState<GroupMatch | null>(null)
   
   const [modalScore1, setModalScore1] = useState<string>('')
@@ -498,30 +508,82 @@ export default function App(): JSX.Element {
     }
   }, [editingMatch])
 
+  const syncLocalStateToBackend = (
+    currentGroups: string[][],
+    currentMatches: GroupMatch[],
+    currentBaseTeams: { [k: string]: string },
+    currentWinners: { [k: string]: number | null }
+  ) => {
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        groups: currentGroups,
+        matches: currentMatches,
+        knockout: {
+          baseTeams: currentBaseTeams,
+          winners: currentWinners
+        }
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log('Successfully synced local state to backend:', data)
+    })
+    .catch(err => console.error('Error syncing local state to backend:', err))
+  }
+
   // Load data from Back-end on startup
   useEffect(() => {
     fetch('/api/state')
       .then(res => res.json())
       .then(data => {
-        if (data.groups) {
-          setGroupNames(data.groups.map((g: any) => g.map((t: any) => t.name)))
-        }
-        if (data.matches) {
-          setGroupMatches(data.matches)
-        }
-        if (data.knockout) {
-          if (data.knockout.baseTeams) {
-            setBaseTeams(data.knockout.baseTeams)
+        const hasBackendScores = data.matches && data.matches.some((m: any) => m.score1 !== null || m.score2 !== null)
+        const hasBackendWinners = data.knockout && data.knockout.winners && Object.keys(data.knockout.winners).length > 0
+        
+        const localGroupsStr = localStorage.getItem('wc2026_groupNames')
+        const localMatchesStr = localStorage.getItem('wc2026_groupMatches')
+        const localBaseTeamsStr = localStorage.getItem('wc2026_baseTeams')
+        const localWinnersStr = localStorage.getItem('wc2026_winners')
+
+        const isLocalEmpty = !localMatchesStr && !localWinnersStr
+
+        if (hasBackendScores || hasBackendWinners || isLocalEmpty) {
+          if (data.groups) {
+            const names = data.groups.map((g: any) => g.map((t: any) => t.name))
+            setGroupNames(names)
+            localStorage.setItem('wc2026_groupNames', JSON.stringify(names))
           }
-          if (data.knockout.winners) {
-            setWinners(data.knockout.winners)
+          if (data.matches) {
+            setGroupMatches(data.matches)
+            localStorage.setItem('wc2026_groupMatches', JSON.stringify(data.matches))
           }
+          if (data.knockout) {
+            if (data.knockout.baseTeams) {
+              setBaseTeams(data.knockout.baseTeams)
+              localStorage.setItem('wc2026_baseTeams', JSON.stringify(data.knockout.baseTeams))
+            }
+            if (data.knockout.winners) {
+              setWinners(data.knockout.winners)
+              localStorage.setItem('wc2026_winners', JSON.stringify(data.knockout.winners))
+            }
+          }
+        } else {
+          // Server is empty but LocalStorage has data (Render cold start)
+          const localGroups = localGroupsStr ? JSON.parse(localGroupsStr) : groupNames
+          const localMatches = localMatchesStr ? JSON.parse(localMatchesStr) : groupMatches
+          const localBaseTeams = localBaseTeamsStr ? JSON.parse(localBaseTeamsStr) : baseTeams
+          const localWinners = localWinnersStr ? JSON.parse(localWinnersStr) : winners
+          
+          console.log('Syncing local storage data back to restarted server...')
+          syncLocalStateToBackend(localGroups, localMatches, localBaseTeams, localWinners)
         }
       })
       .catch(err => console.error('Error fetching state from API:', err))
   }, [])
 
   const handlePersistGroups = (newNames: string[][]) => {
+    localStorage.setItem('wc2026_groupNames', JSON.stringify(newNames))
     fetch('/api/groups', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -531,6 +593,7 @@ export default function App(): JSX.Element {
   }
 
   const handlePersistKnockoutBaseTeams = (nextBaseTeams: { [k: string]: string }) => {
+    localStorage.setItem('wc2026_baseTeams', JSON.stringify(nextBaseTeams))
     fetch('/api/knockout', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -551,6 +614,12 @@ export default function App(): JSX.Element {
           setGroupMatches(state.matches)
           setBaseTeams(state.knockout.baseTeams)
           setWinners(state.knockout.winners)
+
+          localStorage.removeItem('wc2026_groupNames')
+          localStorage.removeItem('wc2026_groupMatches')
+          localStorage.removeItem('wc2026_baseTeams')
+          localStorage.removeItem('wc2026_winners')
+          
           alert('Đã khôi phục dữ liệu về trạng thái mặc định ban đầu!')
         }
       })
@@ -665,6 +734,7 @@ export default function App(): JSX.Element {
     setWinners(prev => {
       const nextVal = prev[matchId] === teamSlot ? null : teamSlot
       const next = { ...prev, [matchId]: nextVal }
+      localStorage.setItem('wc2026_winners', JSON.stringify(next))
       
       fetch('/api/knockout', {
         method: 'PUT',
@@ -678,7 +748,11 @@ export default function App(): JSX.Element {
   }
 
   const handleSaveScore = (matchId: string, s1: number | null, s2: number | null) => {
-    setGroupMatches(prev => prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2 } : m))
+    setGroupMatches(prev => {
+      const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2 } : m)
+      localStorage.setItem('wc2026_groupMatches', JSON.stringify(next))
+      return next
+    })
     
     fetch(`/api/matches/${matchId}`, {
       method: 'PUT',
@@ -716,6 +790,7 @@ export default function App(): JSX.Element {
     })
 
     setBaseTeams(newBaseTeams)
+    localStorage.setItem('wc2026_baseTeams', JSON.stringify(newBaseTeams))
 
     fetch('/api/knockout', {
       method: 'PUT',
