@@ -325,7 +325,7 @@ const getQualifiedTeams = (groupsData: Team[][]) => {
 // Landing Page Component
 const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fixtures' | 'knockout') => void }> = ({ setActiveTab }) => {
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 flex flex-col gap-12 text-white">
+    <div className="max-w-5xl mx-auto py-8 px-4 flex flex-col gap-12 text-white animate-slide-up">
       {/* Hero Banner */}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#1e2354] via-[#12132b] to-[#251b4f] p-8 md:p-12 border border-white/10 shadow-2xl flex flex-col items-center text-center gap-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.15),transparent_60%)]"></div>
@@ -334,7 +334,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
           🏆 Giải đấu đang diễn ra (11/06 - 19/07/2026)
         </div>
 
-        <h1 className="relative text-4xl md:text-6xl font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-teal-300 via-white to-blue-400 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+        <h1 className="relative text-4xl md:text-6xl font-black tracking-tight leading-none text-gradient-animate drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
           FIFA WORLD CUP 2026
         </h1>
 
@@ -371,7 +371,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
           { label: 'Chủ nhà', val: '3', desc: 'Mỹ, Canada, Mexico', color: 'from-yellow-400 to-orange-500' },
           { label: 'Ngày hội', val: '39', desc: 'Ngày tranh tài rực lửa', color: 'from-pink-400 to-rose-500' },
         ].map((stat, idx) => (
-          <div key={idx} className="bg-[#1e1e2d]/60 border border-white/5 rounded-2xl p-5 flex flex-col items-center text-center shadow-lg hover:border-white/10 transition-colors">
+          <div key={idx} className="glass-card rounded-2xl p-5 flex flex-col items-center text-center">
             <span className={`text-3xl md:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r ${stat.color}`}>{stat.val}</span>
             <span className="text-xs font-bold text-white uppercase tracking-wider mt-1">{stat.label}</span>
             <span className="text-[10px] text-gray-400 font-medium mt-0.5">{stat.desc}</span>
@@ -411,7 +411,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
           ].map((card, idx) => (
             <div 
               key={idx} 
-              className={`bg-[#1e1e2d]/60 border ${card.borderClass} rounded-2xl p-6 flex flex-col gap-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl`}
+              className="glass-card rounded-2xl p-6 flex flex-col gap-4"
             >
               <div className="flex items-center gap-3">
                 <span className="text-3xl select-none">{card.icon}</span>
@@ -438,7 +438,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
             { name: 'Báo Hoa Mai (Leopard)', flag: '🇲🇽', desc: 'Đại diện cho tốc độ xé gió, sự dũng mãnh huyền thoại và di sản văn hóa Maya/Aztec đầy huyền bí, rực rỡ sắc màu của đất nước Mexico.', icon: '🐆', color: 'from-green-500/10 to-transparent border-green-500/20' },
             { name: 'Đại Bàng (Eagle)', flag: '🇺🇸', desc: 'Đại diện cho tầm nhìn cao rộng kiêu hãnh, ý chí tự do phóng khoáng và sức mạnh khát vọng dẫn đầu của tinh thần thể thao nước Mỹ.', icon: '🦅', color: 'from-blue-500/10 to-transparent border-blue-500/20' }
           ].map((m, idx) => (
-            <div key={idx} className={`bg-gradient-to-b ${m.color} border rounded-2xl p-6 flex flex-col items-center text-center gap-3 shadow-lg hover:shadow-xl transition-shadow`}>
+            <div key={idx} className={`glass-card bg-gradient-to-b ${m.color} rounded-2xl p-6 flex flex-col items-center text-center gap-3`}>
               <span className="text-5xl animate-pulse select-none">{m.icon}</span>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-sm uppercase tracking-wide text-white">{m.name}</span>
@@ -459,7 +459,7 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
             { city: 'Mexico City', stadium: 'Sân vận động Azteca', capacity: '87,523 chỗ ngồi', note: 'Sân đầu tiên đăng cai 3 kỳ World Cup', icon: '🏟️' },
             { city: 'Toronto', stadium: 'Sân vận động BMO Field', capacity: '45,000 chỗ ngồi', note: 'Trọng điểm bóng đá quốc gia lá phong', icon: '🍁' }
           ].map((stadium, idx) => (
-            <div key={idx} className="bg-[#1e1e2d]/60 border border-white/5 rounded-2xl p-5 flex flex-col gap-2 shadow-lg">
+            <div key={idx} className="glass-card rounded-2xl p-5 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="font-extrabold text-xs text-white uppercase tracking-wider">{stadium.city}</span>
                 <span className="text-xl select-none">{stadium.icon}</span>
@@ -952,9 +952,9 @@ export default function App(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-[#1b1c3b] bg-gradient-to-br from-[#12132b] via-[#1e2354] to-[#12132b] text-white font-sans flex">
+    <div className="premium-bg text-white font-sans flex min-h-screen">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#131424]/90 border-r border-white/10 backdrop-blur-md shrink-0 h-screen sticky top-0">
+      <aside className="hidden md:flex flex-col w-64 bg-[#131424]/90 border-r border-white/10 backdrop-blur-md shrink-0 h-screen sticky top-0 z-10">
         {/* Sidebar Header / Logo */}
         <div 
           onClick={() => {
@@ -1003,7 +1003,7 @@ export default function App(): JSX.Element {
           <button
             onClick={handleSyncExternalScores}
             disabled={isSyncingScores}
-            className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md shadow-emerald-500/5 cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md shadow-emerald-500/5 cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
           >
             <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
             <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỈ SỐ TỰ ĐỘNG'}</span>
@@ -1087,7 +1087,7 @@ export default function App(): JSX.Element {
               <button
                 onClick={handleSyncExternalScores}
                 disabled={isSyncingScores}
-                className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
               >
                 <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
                 <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỶ SỐ TỰ ĐỘNG'}</span>
@@ -1137,14 +1137,14 @@ export default function App(): JSX.Element {
           {activeTab === 'landing' && <LandingPage setActiveTab={setActiveTab} />}
           
           {activeTab === 'standings' && (
-            <div className="max-w-[1600px] mx-auto px-4 md:px-8">
+            <div className="max-w-[1600px] mx-auto px-4 md:px-8 animate-slide-up">
               <div className="mb-8 text-center flex flex-col items-center">
                 <h1 className="text-2xl md:text-4xl font-black mb-1 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 uppercase">BẢNG XẾP HẠNG</h1>
                 <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">FIFA World Cup 2026 - 12 Bảng đấu</p>
               </div>
               <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {calculatedGroups.map((group, gIdx) => (
-                  <div key={gIdx} className="bg-[#1e1e24] rounded-lg overflow-hidden border border-gray-700 shadow-xl">
+                  <div key={gIdx} className="glass-card rounded-lg overflow-hidden shadow-xl">
                     <div className="text-white font-bold text-lg py-3 px-4 border-b border-gray-700 bg-gray-800/80">Bảng {String.fromCharCode(65 + gIdx)}</div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm text-left text-gray-300 whitespace-nowrap">
@@ -1208,7 +1208,7 @@ export default function App(): JSX.Element {
           )}
 
           {activeTab === 'fixtures' && (
-            <div className="max-w-[1600px] mx-auto px-4 md:px-8">
+            <div className="max-w-[1600px] mx-auto px-4 md:px-8 animate-slide-up">
               <div className="mb-8 text-center flex flex-col items-center">
                 <h1 className="text-2xl md:text-4xl font-black mb-1 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 uppercase">KẾT QUẢ THI ĐẤU VÒNG BẢNG</h1>
                 <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-4">Nhấn vào trận đấu để cập nhật tỉ số</p>
@@ -1249,7 +1249,7 @@ export default function App(): JSX.Element {
                     })
                     
                     return (
-                      <div key={groupLetter} className="bg-[#1e1e24] border border-gray-700 rounded-2xl p-4 flex flex-col gap-3 shadow-xl hover:border-gray-600 transition-colors">
+                      <div key={groupLetter} className="glass-card rounded-2xl p-4 flex flex-col gap-3">
                         <div className="font-extrabold text-sm border-b border-gray-800 pb-2 text-teal-400 flex justify-between items-center tracking-wider">
                           <span>BẢNG {groupLetter}</span>
                           <span className="text-[9px] text-gray-400 font-bold bg-gray-800 px-2 py-0.5 rounded-full">6 trận đấu</span>
@@ -1291,7 +1291,7 @@ export default function App(): JSX.Element {
                 /* Date View */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {getGroupedMatchesForColumn(groupMatches).map((group, idx) => (
-                    <div key={group.dateKey} className="bg-[#1e1e24] border border-gray-700 rounded-2xl p-4 flex flex-col gap-3 shadow-xl hover:border-gray-600 transition-colors">
+                    <div key={group.dateKey} className="glass-card rounded-2xl p-4 flex flex-col gap-3">
                       <div className="bg-[#137a3e] text-[#f8e025] font-black text-center py-1.5 rounded-lg text-xs uppercase tracking-wider shadow-md border border-[#1b8c4a]">
                         {group.dayOfWeek} - Ngày {group.date}
                       </div>
@@ -1333,7 +1333,7 @@ export default function App(): JSX.Element {
                   ))}
                   
                   {/* Mascot footer at the end of Date View */}
-                  <div className="bg-[#1e1e38]/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 text-center shadow-lg bg-gradient-to-br from-[#12132b] via-[#1e2354]/40 to-[#12132b] h-full min-h-[180px]">
+                  <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 text-center h-full min-h-[180px]">
                     <div className="text-4xl animate-bounce select-none">🦌 🐆 🦅</div>
                     <div className="text-[10px] tracking-widest text-gray-400 font-bold uppercase">Mascots chính thức</div>
                     <div className="text-xs text-yellow-400 font-extrabold">UNITED 2026</div>
@@ -1345,7 +1345,7 @@ export default function App(): JSX.Element {
           )}
 
           {activeTab === 'knockout' && (
-            <div className="max-w-[1600px] mx-auto px-4 md:px-8">
+            <div className="max-w-[1600px] mx-auto px-4 md:px-8 animate-slide-up">
               <div className="mb-8 text-center flex flex-col items-center">
                 <h1 className="text-2xl md:text-4xl font-black mb-1 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 uppercase">VÒNG KNOCKOUT</h1>
                 <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">Nhấp chọn đội chiến thắng để đi tiếp</p>
