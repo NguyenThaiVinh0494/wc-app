@@ -1667,24 +1667,24 @@ export default function App(): JSX.Element {
 
         return (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-[#1e1e2d] border border-gray-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-transform">
-              <div className="bg-gradient-to-r from-teal-500/10 to-blue-500/10 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+            <div className="bg-[#1e1e2d] border border-gray-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-transform">
+              <div className="bg-gradient-to-r from-teal-500/10 to-blue-500/10 border-b border-gray-800 px-8 py-5 flex items-center justify-between">
                 <h3 className="font-extrabold text-sm tracking-tight text-white uppercase">
                   {isAdmin ? 'Cập Nhật Tỉ Số' : 'Thông Tin Trận Đấu'}
                 </h3>
                 <button
                   onClick={() => setEditingMatch(null)}
-                  className="text-gray-400 hover:text-white transition-colors text-xl font-bold"
+                  className="text-gray-400 hover:text-white transition-colors text-2xl font-bold"
                 >
                   &times;
                 </button>
               </div>
 
-              <div className="p-6 flex flex-col gap-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex flex-col items-center gap-2 w-[42%] text-center">
-                    <span className="text-3xl select-none">{(TEAMS_INFO[editingMatch.team1] || { flag: '🏳️' }).flag}</span>
-                    <span className="font-bold text-xs text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team1}>{editingMatch.team1}</span>
+              <div className="p-8 flex flex-col gap-6">
+                <div className="flex items-center justify-between gap-6">
+                  <div className="flex flex-col items-center gap-3 w-[42%] text-center">
+                    <span className="text-5xl select-none">{(TEAMS_INFO[editingMatch.team1] || { flag: '🏳️' }).flag}</span>
+                    <span className="font-extrabold text-sm text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team1}>{editingMatch.team1}</span>
                     {isAdmin ? (
                       <input
                         type="number"
@@ -1692,24 +1692,24 @@ export default function App(): JSX.Element {
                         placeholder="-"
                         value={modalScore1}
                         onChange={(e) => setModalScore1(e.target.value)}
-                        className="w-14 h-12 bg-black/40 border border-gray-700 rounded-lg text-center text-xl font-bold text-white outline-none focus:border-green-500 transition-colors"
+                        className="w-16 h-14 bg-black/40 border border-gray-700 rounded-lg text-center text-2xl font-bold text-white outline-none focus:border-green-500 transition-colors"
                       />
                     ) : (
-                      <span className="text-3xl font-black text-white mt-1">{editingMatch.score1 !== null ? editingMatch.score1 : '-'}</span>
+                      <span className="text-4xl font-black text-white mt-1">{editingMatch.score1 !== null ? editingMatch.score1 : '-'}</span>
                     )}
 
                     {homeScorersList.length > 0 && (
-                      <div className="text-[10px] text-gray-400 mt-2 font-medium bg-black/25 py-1 px-2 rounded-lg w-full text-center">
+                      <div className="text-xs text-gray-400 mt-2 font-medium bg-black/25 py-1.5 px-3 rounded-lg w-full text-center">
                         {homeScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
                       </div>
                     )}
                   </div>
 
-                  <div className="text-gray-500 font-black text-xs uppercase self-start pt-6">VS</div>
+                  <div className="text-gray-500 font-black text-sm uppercase self-start pt-8">VS</div>
 
-                  <div className="flex flex-col items-center gap-2 w-[42%] text-center">
-                    <span className="text-3xl select-none">{(TEAMS_INFO[editingMatch.team2] || { flag: '🏳️' }).flag}</span>
-                    <span className="font-bold text-xs text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team2}>{editingMatch.team2}</span>
+                  <div className="flex flex-col items-center gap-3 w-[42%] text-center">
+                    <span className="text-5xl select-none">{(TEAMS_INFO[editingMatch.team2] || { flag: '🏳️' }).flag}</span>
+                    <span className="font-extrabold text-sm text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team2}>{editingMatch.team2}</span>
                     {isAdmin ? (
                       <input
                         type="number"
@@ -1717,14 +1717,14 @@ export default function App(): JSX.Element {
                         placeholder="-"
                         value={modalScore2}
                         onChange={(e) => setModalScore2(e.target.value)}
-                        className="w-14 h-12 bg-black/40 border border-gray-700 rounded-lg text-center text-xl font-bold text-white outline-none focus:border-green-500 transition-colors"
+                        className="w-16 h-14 bg-black/40 border border-gray-700 rounded-lg text-center text-2xl font-bold text-white outline-none focus:border-green-500 transition-colors"
                       />
                     ) : (
-                      <span className="text-3xl font-black text-white mt-1">{editingMatch.score2 !== null ? editingMatch.score2 : '-'}</span>
+                      <span className="text-4xl font-black text-white mt-1">{editingMatch.score2 !== null ? editingMatch.score2 : '-'}</span>
                     )}
 
                     {awayScorersList.length > 0 && (
-                      <div className="text-[10px] text-gray-400 mt-2 font-medium bg-black/25 py-1 px-2 rounded-lg w-full text-center">
+                      <div className="text-xs text-gray-400 mt-2 font-medium bg-black/25 py-1.5 px-3 rounded-lg w-full text-center">
                         {awayScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
                       </div>
                     )}
@@ -1732,14 +1732,14 @@ export default function App(): JSX.Element {
                 </div>
 
                 {stadium && (
-                  <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-1 text-center">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Sân vận động</span>
-                    <span className="text-xs font-extrabold text-yellow-400">{stadium.name}</span>
-                    <span className="text-[10px] text-gray-400 font-medium">{stadium.city}, {stadium.country}</span>
+                  <div className="border-t border-white/5 pt-4 mt-2 flex flex-col gap-1 text-center">
+                    <span className="text-xs uppercase font-bold text-gray-400">Sân vận động</span>
+                    <span className="text-sm font-extrabold text-yellow-400">{stadium.name}</span>
+                    <span className="text-xs text-gray-400 font-medium">{stadium.city}, {stadium.country}</span>
                   </div>
                 )}
 
-                <div className="flex gap-2 justify-end mt-2 border-t border-white/5 pt-4">
+                <div className="flex gap-3 justify-end mt-2 border-t border-white/5 pt-5">
                   {isAdmin ? (
                     <>
                       <button
@@ -1747,13 +1747,13 @@ export default function App(): JSX.Element {
                           handleSaveScore(editingMatch.id, null, null)
                           setEditingMatch(null)
                         }}
-                        className="px-3 py-2 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-[10px] font-bold transition-all"
+                        className="px-4 py-2.5 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-xs font-bold transition-all"
                       >
                         Xóa Tỉ Số
                       </button>
                       <button
                         onClick={() => setEditingMatch(null)}
-                        className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-[10px] font-bold transition-all"
+                        className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs font-bold transition-all"
                       >
                         Hủy
                       </button>
@@ -1764,7 +1764,7 @@ export default function App(): JSX.Element {
                           handleSaveScore(editingMatch.id, s1, s2)
                           setEditingMatch(null)
                         }}
-                        className="px-4 py-2 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-[10px] transition-all shadow-md shadow-green-500/20"
+                        className="px-5 py-2.5 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-xs transition-all shadow-md shadow-green-500/20"
                       >
                         Lưu
                       </button>
@@ -1772,7 +1772,7 @@ export default function App(): JSX.Element {
                   ) : (
                     <button
                       onClick={() => setEditingMatch(null)}
-                      className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-md cursor-pointer"
+                      className="px-8 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
                     >
                       Đóng
                     </button>

@@ -261,8 +261,10 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
         const awayScore = apiG.away_score !== null && apiG.away_score !== undefined && apiG.away_score !== 'null' ? Number(apiG.away_score) : null
 
         const isHomeTeam1 = apiG.home_team_name_en === hEng
-        const nextScore1 = isHomeTeam1 ? homeScore : awayScore
-        const nextScore2 = isHomeTeam1 ? awayScore : homeScore
+        const isNotStarted = apiG.time_elapsed === 'notstarted'
+        
+        const nextScore1 = isNotStarted ? null : (isHomeTeam1 ? homeScore : awayScore)
+        const nextScore2 = isNotStarted ? null : (isHomeTeam1 ? awayScore : homeScore)
 
         const nextHomeScorers = apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null
         const nextAwayScorers = apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null
