@@ -1722,7 +1722,7 @@ export default function App(): JSX.Element {
               </div>
 
               <div className="p-8 flex flex-col gap-6">
-                <div className="flex items-center justify-between gap-6">
+                <div className="flex items-start justify-between gap-6">
                   <div className="flex flex-col items-center gap-3 w-[42%] text-center">
                     {renderFlag(editingMatch.team1, (TEAMS_INFO[editingMatch.team1] || { flag: '🏳️' }).flag, "w-16 h-11 object-cover rounded-md shadow-md shrink-0")}
                     <span className="font-extrabold text-sm text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team1}>{editingMatch.team1}</span>
