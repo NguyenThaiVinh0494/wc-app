@@ -583,6 +583,59 @@ export default function App(): JSX.Element {
       .catch(err => console.error('Error fetching state from API:', err))
   }, [])
 
+  // Background polling from own server (every 2 minutes)
+  useEffect(() => {
+    const refreshState = () => {
+      // Avoid overwriting state if user is editing or has text input focused
+      const isInputFocused = document.activeElement?.tagName === 'INPUT'
+      if (editingMatch || isInputFocused) return
+
+      fetch('/api/state')
+        .then(res => res.json())
+        .then(data => {
+          if (data.groups) {
+            const names = data.groups.map((g: any) => g.map((t: any) => t.name))
+            const currentNamesStr = JSON.stringify(groupNames)
+            const nextNamesStr = JSON.stringify(names)
+            if (currentNamesStr !== nextNamesStr) {
+              setGroupNames(names)
+              localStorage.setItem('wc2026_groupNames', nextNamesStr)
+            }
+          }
+          if (data.matches) {
+            const currentMatchesStr = JSON.stringify(groupMatches)
+            const nextMatchesStr = JSON.stringify(data.matches)
+            if (currentMatchesStr !== nextMatchesStr) {
+              setGroupMatches(data.matches)
+              localStorage.setItem('wc2026_groupMatches', nextMatchesStr)
+            }
+          }
+          if (data.knockout) {
+            if (data.knockout.baseTeams) {
+              const currentBaseStr = JSON.stringify(baseTeams)
+              const nextBaseStr = JSON.stringify(data.knockout.baseTeams)
+              if (currentBaseStr !== nextBaseStr) {
+                setBaseTeams(data.knockout.baseTeams)
+                localStorage.setItem('wc2026_baseTeams', nextBaseStr)
+              }
+            }
+            if (data.knockout.winners) {
+              const currentWinnersStr = JSON.stringify(winners)
+              const nextWinnersStr = JSON.stringify(data.knockout.winners)
+              if (currentWinnersStr !== nextWinnersStr) {
+                setWinners(data.knockout.winners)
+                localStorage.setItem('wc2026_winners', nextWinnersStr)
+              }
+            }
+          }
+        })
+        .catch(err => console.log('Error auto-refreshing state:', err))
+    }
+
+    const intervalId = setInterval(refreshState, 120000) // 2 minutes
+    return () => clearInterval(intervalId)
+  }, [groupNames, groupMatches, baseTeams, winners, editingMatch])
+
   const handlePersistGroups = (newNames: string[][]) => {
     localStorage.setItem('wc2026_groupNames', JSON.stringify(newNames))
     fetch('/api/groups', {

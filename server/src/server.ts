@@ -225,22 +225,22 @@ const VIETNAMESE_TO_ENGLISH_TEAMS: { [key: string]: string } = {
   'Panama': 'Panama'
 }
 
-// 7. Sync live scores from external API (worldcup26.ir)
-app.post('/api/sync-external-scores', async (req, res) => {
+// Helper function to perform external score sync
+async function performSyncExternalScores(): Promise<{ success: boolean; updatedCount: number }> {
   try {
     const db = await readDb()
 
     // Fetch scores from the free API
     const response = await fetch('https://worldcup26.ir/get/games')
     if (!response.ok) {
-      return res.status(502).json({ error: 'Failed to fetch scores from external server' })
+      throw new Error(`External API returned status: ${response.status}`)
     }
 
     const data = await response.json()
     const apiGames = data.games
 
     if (!apiGames || !Array.isArray(apiGames)) {
-      return res.status(502).json({ error: 'Invalid data format from external server' })
+      throw new Error('Invalid data format from external API')
     }
 
     let updatedCount = 0
@@ -276,12 +276,32 @@ app.post('/api/sync-external-scores', async (req, res) => {
       await writeDb(db)
     }
 
-    res.json({ success: true, updatedCount, matches: db.matches })
+    return { success: true, updatedCount }
   } catch (error) {
-    console.error('Error syncing external scores:', error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error performing external score sync:', error)
+    return { success: false, updatedCount: 0 }
+  }
+}
+
+// 7. Sync live scores from external API (worldcup26.ir)
+app.post('/api/sync-external-scores', async (req, res) => {
+  const result = await performSyncExternalScores()
+  if (result.success) {
+    const db = await readDb()
+    res.json({ success: true, updatedCount: result.updatedCount, matches: db.matches })
+  } else {
+    res.status(502).json({ error: 'Failed to sync scores from external server' })
   }
 })
+
+// Run background auto-sync every 10 minutes (600,000 ms)
+const AUTO_SYNC_INTERVAL = 10 * 60 * 1000
+setInterval(async () => {
+  console.log('[Auto Sync] Running scheduled background score sync...')
+  const result = await performSyncExternalScores()
+  console.log(`[Auto Sync] Scheduled background sync finished. Success: ${result.success}, Updated count: ${result.updatedCount}`)
+}, AUTO_SYNC_INTERVAL)
+
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
