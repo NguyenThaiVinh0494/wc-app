@@ -174,6 +174,115 @@ app.post('/api/sync', async (req, res) => {
   }
 })
 
+const VIETNAMESE_TO_ENGLISH_TEAMS: { [key: string]: string } = {
+  'Mexico': 'Mexico',
+  'Nam Phi': 'South Africa',
+  'Hàn Quốc': 'South Korea',
+  'CH Czech': 'Czech Republic',
+  'Canada': 'Canada',
+  'Bosnia & Herzegovina': 'Bosnia and Herzegovina',
+  'Qatar': 'Qatar',
+  'Thụy Sĩ': 'Switzerland',
+  'Brazil': 'Brazil',
+  'Morocco': 'Morocco',
+  'Haiti': 'Haiti',
+  'Scotland': 'Scotland',
+  'Mỹ': 'United States',
+  'Paraguay': 'Paraguay',
+  'Australia': 'Australia',
+  'Thổ Nhĩ Kỳ': 'Turkey',
+  'Đức': 'Germany',
+  'Curacao': 'Curaçao',
+  'Bờ Biển Ngà': 'Ivory Coast',
+  'Ecuador': 'Ecuador',
+  'Hà Lan': 'Netherlands',
+  'Nhật Bản': 'Japan',
+  'Thụy Điển': 'Sweden',
+  'Tunisia': 'Tunisia',
+  'Bỉ': 'Belgium',
+  'Ai Cập': 'Egypt',
+  'Iran': 'Iran',
+  'New Zealand': 'New Zealand',
+  'Tây Ban Nha': 'Spain',
+  'Cape Verde': 'Cape Verde',
+  'Saudi Arabia': 'Saudi Arabia',
+  'Uruguay': 'Uruguay',
+  'Pháp': 'France',
+  'Senegal': 'Senegal',
+  'Iraq': 'Iraq',
+  'Na Uy': 'Norway',
+  'Argentina': 'Argentina',
+  'Algeria': 'Algeria',
+  'Áo': 'Austria',
+  'Jordan': 'Jordan',
+  'Bồ Đào Nha': 'Portugal',
+  'CHDC Congo': 'Democratic Republic of the Congo',
+  'Uzbekistan': 'Uzbekistan',
+  'Colombia': 'Colombia',
+  'Anh': 'England',
+  'Croatia': 'Croatia',
+  'Ghana': 'Ghana',
+  'Panama': 'Panama'
+}
+
+// 7. Sync live scores from external API (worldcup26.ir)
+app.post('/api/sync-external-scores', async (req, res) => {
+  try {
+    const db = await readDb()
+
+    // Fetch scores from the free API
+    const response = await fetch('https://worldcup26.ir/get/games')
+    if (!response.ok) {
+      return res.status(502).json({ error: 'Failed to fetch scores from external server' })
+    }
+
+    const data = await response.json()
+    const apiGames = data.games
+
+    if (!apiGames || !Array.isArray(apiGames)) {
+      return res.status(502).json({ error: 'Invalid data format from external server' })
+    }
+
+    let updatedCount = 0
+
+    db.matches.forEach((match) => {
+      const hEng = VIETNAMESE_TO_ENGLISH_TEAMS[match.team1] || match.team1
+      const aEng = VIETNAMESE_TO_ENGLISH_TEAMS[match.team2] || match.team2
+
+      const apiG = apiGames.find((g: any) => 
+        (g.home_team_name_en === hEng && g.away_team_name_en === aEng) ||
+        (g.home_team_name_en === aEng && g.away_team_name_en === hEng)
+      )
+
+      if (apiG && apiG.time_elapsed !== 'notstarted') {
+        const homeScore = apiG.home_score !== null && apiG.home_score !== undefined ? Number(apiG.home_score) : null
+        const awayScore = apiG.away_score !== null && apiG.away_score !== undefined ? Number(apiG.away_score) : null
+
+        if (homeScore !== null && awayScore !== null && !isNaN(homeScore) && !isNaN(awayScore)) {
+          const isHomeTeam1 = apiG.home_team_name_en === hEng
+          const nextScore1 = isHomeTeam1 ? homeScore : awayScore
+          const nextScore2 = isHomeTeam1 ? awayScore : homeScore
+
+          if (match.score1 !== nextScore1 || match.score2 !== nextScore2) {
+            match.score1 = nextScore1
+            match.score2 = nextScore2
+            updatedCount++
+          }
+        }
+      }
+    })
+
+    if (updatedCount > 0) {
+      await writeDb(db)
+    }
+
+    res.json({ success: true, updatedCount, matches: db.matches })
+  } catch (error) {
+    console.error('Error syncing external scores:', error)
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
+})
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const FRONTEND_BUILD_PATH = path.join(__dirname, '../../dist')

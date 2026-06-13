@@ -479,6 +479,7 @@ export default function App(): JSX.Element {
   const [activeTab, setActiveTab] = useState<'landing' | 'standings' | 'fixtures' | 'knockout'>('landing')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
   const [fixtureView, setFixtureView] = useState<'date' | 'group'>('group')
+  const [isSyncingScores, setIsSyncingScores] = useState<boolean>(false)
 
   const [groupNames, setGroupNames] = useState<string[][]>(() => {
     const saved = localStorage.getItem('wc2026_groupNames')
@@ -624,6 +625,31 @@ export default function App(): JSX.Element {
         }
       })
       .catch(err => console.error('Error resetting tournament state:', err))
+  }
+
+  const handleSyncExternalScores = () => {
+    setIsSyncingScores(true)
+    fetch('/api/sync-external-scores', { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        setIsSyncingScores(false)
+        if (data.success) {
+          if (data.updatedCount > 0) {
+            setGroupMatches(data.matches)
+            localStorage.setItem('wc2026_groupMatches', JSON.stringify(data.matches))
+            alert(`Đã cập nhật tự động thành công tỉ số của ${data.updatedCount} trận đấu từ FIFA!`)
+          } else {
+            alert('Tỉ số các trận đấu hiện tại đã là mới nhất!')
+          }
+        } else {
+          alert('Không thể cập nhật tỉ số tự động. Vui lòng thử lại sau!')
+        }
+      })
+      .catch(err => {
+        setIsSyncingScores(false)
+        console.error('Error syncing external scores:', err)
+        alert('Đã xảy ra lỗi kết nối với máy chủ khi cập nhật tỉ số.')
+      })
   }
 
   const calculatedGroups = useMemo(() => {
@@ -973,10 +999,20 @@ export default function App(): JSX.Element {
             )
           })}
           
+          {/* Auto update scores button */}
+          <button
+            onClick={handleSyncExternalScores}
+            disabled={isSyncingScores}
+            className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md shadow-emerald-500/5 cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
+            <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỈ SỐ TỰ ĐỘNG'}</span>
+          </button>
+
           {/* Reset button at the bottom of navigation */}
           <button
             onClick={handleResetAll}
-            className="mt-auto mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md shadow-red-500/5 cursor-pointer animate-pulse hover:animate-none"
+            className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md shadow-red-500/5 cursor-pointer animate-pulse hover:animate-none"
           >
             <span className="text-base select-none">🔄</span>
             <span>KHÔI PHỤC BAN ĐẦU</span>
@@ -1047,9 +1083,19 @@ export default function App(): JSX.Element {
                 )
               })}
 
+              {/* Auto update scores button */}
+              <button
+                onClick={handleSyncExternalScores}
+                disabled={isSyncingScores}
+                className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
+                <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỶ SỐ TỰ ĐỘNG'}</span>
+              </button>
+
               <button
                 onClick={handleResetAll}
-                className="mt-auto mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md cursor-pointer"
+                className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md cursor-pointer"
               >
                 <span className="text-base select-none">🔄</span>
                 <span>KHÔI PHỤC BAN ĐẦU</span>
