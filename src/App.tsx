@@ -133,6 +133,43 @@ const STADIUMS_INFO: { [id: string]: { name: string; city: string; country: stri
   '16': { name: 'Sân vận động SoFi', city: 'Los Angeles', country: 'Mỹ' }
 }
 
+const getFlagUrl = (teamName: string, emoji: string) => {
+  if (teamName === 'Anh') return 'https://flagcdn.com/w80/gb-eng.png';
+  if (teamName === 'Scotland') return 'https://flagcdn.com/w80/gb-sct.png';
+  if (emoji === '🏳️') return '';
+  try {
+    if (!emoji || emoji.length < 4) return '';
+    const charCode1 = emoji.codePointAt(0);
+    const charCode2 = emoji.codePointAt(2);
+    if (charCode1 && charCode2) {
+      const code1 = String.fromCharCode(charCode1 - 127397);
+      const code2 = String.fromCharCode(charCode2 - 127397);
+      const code = (code1 + code2).toLowerCase();
+      return `https://flagcdn.com/w80/${code}.png`;
+    }
+  } catch (e) {
+    console.error('Error parsing emoji:', emoji, e);
+  }
+  return '';
+}
+
+const renderFlag = (teamName: string, emoji: string, className: string = "w-5 h-3.5 object-cover rounded shadow-sm inline-block") => {
+  const url = getFlagUrl(teamName, emoji);
+  if (url) {
+    return (
+      <img 
+        src={url} 
+        alt={teamName}
+        className={className}
+        onError={(e) => {
+          (e.target as HTMLElement).style.display = 'none';
+        }}
+      />
+    );
+  }
+  return <span className="select-none">{emoji}</span>;
+}
+
 const initialR32Teams: { [k: string]: string } = {
   m1_t1: 'Nhì Bảng A', m1_t2: 'Nhì Bảng B',
   m2_t1: 'Nhất Bảng E', m2_t2: 'Hạng 3 A/B/C/D/F',
@@ -371,15 +408,15 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
         {/* Host Countries Flags */}
         <div className="relative flex justify-center gap-6 md:gap-10 mt-4">
           <div className="flex flex-col items-center gap-1.5 transition-transform hover:scale-110">
-            <span className="text-4xl md:text-5xl drop-shadow-lg select-none">🇺🇸</span>
+            {renderFlag('Mỹ', '🇺🇸', 'w-12 h-8 object-cover rounded shadow-md')}
             <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Hoa Kỳ</span>
           </div>
           <div className="flex flex-col items-center gap-1.5 transition-transform hover:scale-110">
-            <span className="text-4xl md:text-5xl drop-shadow-lg select-none">🇨🇦</span>
+            {renderFlag('Canada', '🇨🇦', 'w-12 h-8 object-cover rounded shadow-md')}
             <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Canada</span>
           </div>
           <div className="flex flex-col items-center gap-1.5 transition-transform hover:scale-110">
-            <span className="text-4xl md:text-5xl drop-shadow-lg select-none">🇲🇽</span>
+            {renderFlag('Mexico', '🇲🇽', 'w-12 h-8 object-cover rounded shadow-md')}
             <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Mexico</span>
           </div>
         </div>
@@ -456,15 +493,15 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
         <h2 className="text-lg font-extrabold uppercase border-l-4 border-yellow-400 pl-3">Linh vật chính thức (Official Mascots)</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { name: 'Tuần Lộc (Deer)', flag: '🇨🇦', desc: 'Đại diện cho sự nhanh nhẹn, bền bỉ kiên cường trước nghịch cảnh, mang đậm nét đặc trưng hoang dã của thiên nhiên Canada rộng lớn.', icon: '🦌', color: 'from-red-500/10 to-transparent border-red-500/20' },
-            { name: 'Báo Hoa Mai (Leopard)', flag: '🇲🇽', desc: 'Đại diện cho tốc độ xé gió, sự dũng mãnh huyền thoại và di sản văn hóa Maya/Aztec đầy huyền bí, rực rỡ sắc màu của đất nước Mexico.', icon: '🐆', color: 'from-green-500/10 to-transparent border-green-500/20' },
-            { name: 'Đại Bàng (Eagle)', flag: '🇺🇸', desc: 'Đại diện cho tầm nhìn cao rộng kiêu hãnh, ý chí tự do phóng khoáng và sức mạnh khát vọng dẫn đầu của tinh thần thể thao nước Mỹ.', icon: '🦅', color: 'from-blue-500/10 to-transparent border-blue-500/20' }
+            { name: 'Tuần Lộc (Deer)', country: 'Canada', flag: '🇨🇦', desc: 'Đại diện cho sự nhanh nhẹn, bền bỉ kiên cường trước nghịch cảnh, mang đậm nét đặc trưng hoang dã của thiên nhiên Canada rộng lớn.', icon: '🦌', color: 'from-red-500/10 to-transparent border-red-500/20' },
+            { name: 'Báo Hoa Mai (Leopard)', country: 'Mexico', flag: '🇲🇽', desc: 'Đại diện cho tốc độ xé gió, sự dũng mãnh huyền thoại và di sản văn hóa Maya/Aztec đầy huyền bí, rực rỡ sắc màu của đất nước Mexico.', icon: '🐆', color: 'from-green-500/10 to-transparent border-green-500/20' },
+            { name: 'Đại Bàng (Eagle)', country: 'Mỹ', flag: '🇺🇸', desc: 'Đại diện cho tầm nhìn cao rộng kiêu hãnh, ý chí tự do phóng khoáng và sức mạnh khát vọng dẫn đầu của tinh thần thể thao nước Mỹ.', icon: '🦅', color: 'from-blue-500/10 to-transparent border-blue-500/20' }
           ].map((m, idx) => (
             <div key={idx} className={`glass-card bg-gradient-to-b ${m.color} rounded-2xl p-6 flex flex-col items-center text-center gap-3`}>
               <span className="text-5xl animate-pulse select-none">{m.icon}</span>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm uppercase tracking-wide text-white">{m.name}</span>
-                <span className="text-sm select-none">{m.flag}</span>
+                <span className="font-extrabold text-sm uppercase tracking-wide text-slate-800">{m.name}</span>
+                {renderFlag(m.country, m.flag, "w-5 h-3.5 object-cover rounded shadow-sm shrink-0")}
               </div>
               <p className="text-[11px] text-gray-400 font-medium leading-relaxed">{m.desc}</p>
             </div>
@@ -1137,7 +1174,7 @@ export default function App(): JSX.Element {
                       <span className="truncate uppercase text-[10px] tracking-tight" title={match.team1}>
                         {match.team1}
                       </span>
-                      <span className="text-base shrink-0 select-none">{t1Info.flag}</span>
+                      {renderFlag(match.team1, t1Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
                     </div>
 
                     <div className="w-8 h-8 rounded-full bg-white text-black font-black flex items-center justify-center text-[10px] shadow-md shrink-0 mx-1 select-none">
@@ -1145,7 +1182,7 @@ export default function App(): JSX.Element {
                     </div>
 
                     <div className="flex items-center gap-1.5 w-[42%] justify-start text-left">
-                      <span className="text-base shrink-0 select-none">{t2Info.flag}</span>
+                      {renderFlag(match.team2, t2Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
                       <span className="truncate uppercase text-[10px] tracking-tight" title={match.team2}>
                         {match.team2}
                       </span>
@@ -1431,7 +1468,7 @@ export default function App(): JSX.Element {
                               <tr key={tIdx} className="border-b border-gray-800/50 last:border-0 hover:bg-white/5 transition-colors">
                                 <td className="px-3 py-2 flex items-center gap-2 border-l-2 border-transparent hover:border-blue-500">
                                   <span className="w-4 text-center text-gray-500 font-bold">{tIdx + 1}</span>
-                                  <span className="text-base select-none shrink-0">{teamInfo.flag}</span>
+                                  {renderFlag(team.name, teamInfo.flag, "w-5 h-3.5 object-cover rounded shadow-sm shrink-0")}
                                   {role === 'admin' ? (
                                     <input value={team.name} onChange={(e) => handleTeamStatChange(gIdx, tIdx, 'name', e.target.value)} onBlur={() => handlePersistGroups(groupNames)} className="bg-transparent text-white font-medium w-24 md:w-32 outline-none focus:bg-white/10 px-1 py-1 rounded" />
                                   ) : (
@@ -1531,7 +1568,7 @@ export default function App(): JSX.Element {
                               >
                                 <div className="flex items-center gap-1.5 w-[42%] justify-end text-right">
                                   <span className="truncate uppercase text-[9px] tracking-tight">{match.team1}</span>
-                                  <span className="text-sm shrink-0 select-none">{t1Info.flag}</span>
+                                  {renderFlag(match.team1, t1Info.flag, "w-4 h-3 object-cover rounded shadow-sm shrink-0")}
                                 </div>
                                 
                                 <div className="w-10 text-center py-0.5 px-1 bg-white text-black font-black rounded text-[9px] shadow-sm shrink-0">
@@ -1539,7 +1576,7 @@ export default function App(): JSX.Element {
                                 </div>
                                 
                                 <div className="flex items-center gap-1.5 w-[42%] justify-start text-left">
-                                  <span className="text-sm shrink-0 select-none">{t2Info.flag}</span>
+                                  {renderFlag(match.team2, t2Info.flag, "w-4 h-3 object-cover rounded shadow-sm shrink-0")}
                                   <span className="truncate uppercase text-[9px] tracking-tight">{match.team2}</span>
                                 </div>
                               </div>
@@ -1575,7 +1612,7 @@ export default function App(): JSX.Element {
                                 <span className="truncate uppercase text-[9px] tracking-tight" title={match.team1}>
                                   {match.team1}
                                 </span>
-                                <span className="text-base shrink-0 select-none">{t1Info.flag}</span>
+                                {renderFlag(match.team1, t1Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
                               </div>
 
                               <div className="w-8 h-8 rounded-full bg-white text-black font-black flex items-center justify-center text-[9px] shadow-md shrink-0 mx-1 select-none">
@@ -1583,7 +1620,7 @@ export default function App(): JSX.Element {
                               </div>
 
                               <div className="flex items-center gap-1.5 w-[42%] justify-start text-left">
-                                <span className="text-base shrink-0 select-none">{t2Info.flag}</span>
+                                {renderFlag(match.team2, t2Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
                                 <span className="truncate uppercase text-[9px] tracking-tight" title={match.team2}>
                                   {match.team2}
                                 </span>
@@ -1687,7 +1724,7 @@ export default function App(): JSX.Element {
               <div className="p-8 flex flex-col gap-6">
                 <div className="flex items-center justify-between gap-6">
                   <div className="flex flex-col items-center gap-3 w-[42%] text-center">
-                    <span className="text-5xl select-none">{(TEAMS_INFO[editingMatch.team1] || { flag: '🏳️' }).flag}</span>
+                    {renderFlag(editingMatch.team1, (TEAMS_INFO[editingMatch.team1] || { flag: '🏳️' }).flag, "w-16 h-11 object-cover rounded-md shadow-md shrink-0")}
                     <span className="font-extrabold text-sm text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team1}>{editingMatch.team1}</span>
                     {isAdmin ? (
                       <input
@@ -1712,7 +1749,7 @@ export default function App(): JSX.Element {
                   <div className="text-gray-500 font-black text-sm uppercase self-start pt-8">VS</div>
 
                   <div className="flex flex-col items-center gap-3 w-[42%] text-center">
-                    <span className="text-5xl select-none">{(TEAMS_INFO[editingMatch.team2] || { flag: '🏳️' }).flag}</span>
+                    {renderFlag(editingMatch.team2, (TEAMS_INFO[editingMatch.team2] || { flag: '🏳️' }).flag, "w-16 h-11 object-cover rounded-md shadow-md shrink-0")}
                     <span className="font-extrabold text-sm text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team2}>{editingMatch.team2}</span>
                     {isAdmin ? (
                       <input
@@ -1738,7 +1775,7 @@ export default function App(): JSX.Element {
                 {stadium && (
                   <div className="border-t border-white/5 pt-4 mt-2 flex flex-col gap-1 text-center">
                     <span className="text-xs uppercase font-bold text-gray-400">Sân vận động</span>
-                    <span className="text-sm font-extrabold text-yellow-400">{stadium.name}</span>
+                    <span className="text-sm font-extrabold text-amber-600">{stadium.name}</span>
                     <span className="text-xs text-gray-400 font-medium">{stadium.city}, {stadium.country}</span>
                   </div>
                 )}
