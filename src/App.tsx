@@ -273,20 +273,20 @@ const initialGroupMatches: GroupMatch[] = [
 
 const getGroupColor = (groupLetter: string) => {
   const colorMap: { [key: string]: { border: string; bg: string; text: string } } = {
-    'A': { border: 'border-emerald-500/30 hover:border-emerald-500/60', bg: 'bg-[#064e3b]/30 hover:bg-[#064e3b]/45', text: 'text-emerald-300' },
-    'B': { border: 'border-blue-500/30 hover:border-blue-500/60', bg: 'bg-[#1e3a8a]/30 hover:bg-[#1e3a8a]/45', text: 'text-blue-300' },
-    'C': { border: 'border-cyan-500/30 hover:border-cyan-500/60', bg: 'bg-[#083344]/30 hover:bg-[#083344]/45', text: 'text-cyan-300' },
-    'D': { border: 'border-amber-500/30 hover:border-amber-500/60', bg: 'bg-[#451a03]/30 hover:bg-[#451a03]/45', text: 'text-amber-300' },
-    'E': { border: 'border-violet-500/30 hover:border-violet-500/60', bg: 'bg-[#2e1065]/30 hover:bg-[#2e1065]/45', text: 'text-violet-300' },
-    'F': { border: 'border-pink-500/30 hover:border-pink-500/60', bg: 'bg-[#500724]/30 hover:bg-[#500724]/45', text: 'text-pink-300' },
-    'G': { border: 'border-rose-500/30 hover:border-rose-500/60', bg: 'bg-[#4c0519]/30 hover:bg-[#4c0519]/45', text: 'text-rose-300' },
-    'H': { border: 'border-sky-500/30 hover:border-sky-500/60', bg: 'bg-[#0c4a6e]/30 hover:bg-[#0c4a6e]/45', text: 'text-sky-300' },
-    'I': { border: 'border-indigo-500/30 hover:border-indigo-500/60', bg: 'bg-[#311042]/30 hover:bg-[#311042]/45', text: 'text-indigo-300' },
-    'J': { border: 'border-teal-500/30 hover:border-teal-500/60', bg: 'bg-[#115e59]/20 hover:bg-[#115e59]/35', text: 'text-teal-300' },
-    'K': { border: 'border-lime-500/30 hover:border-lime-500/60', bg: 'bg-[#3f6212]/30 hover:bg-[#3f6212]/45', text: 'text-lime-300' },
-    'L': { border: 'border-fuchsia-500/30 hover:border-fuchsia-500/60', bg: 'bg-[#701a75]/30 hover:bg-[#701a75]/45', text: 'text-fuchsia-300' }
+    'A': { border: 'border-emerald-200 hover:border-emerald-400', bg: 'bg-emerald-50/70 hover:bg-emerald-100/90', text: 'text-emerald-900' },
+    'B': { border: 'border-blue-200 hover:border-blue-400', bg: 'bg-blue-50/70 hover:bg-blue-100/90', text: 'text-blue-900' },
+    'C': { border: 'border-cyan-200 hover:border-cyan-400', bg: 'bg-cyan-50/70 hover:bg-cyan-100/90', text: 'text-cyan-900' },
+    'D': { border: 'border-amber-200 hover:border-amber-400', bg: 'bg-amber-50/70 hover:bg-amber-100/90', text: 'text-amber-900' },
+    'E': { border: 'border-violet-200 hover:border-violet-400', bg: 'bg-violet-50/70 hover:bg-violet-100/90', text: 'text-violet-900' },
+    'F': { border: 'border-pink-200 hover:border-pink-400', bg: 'bg-pink-50/70 hover:bg-pink-100/90', text: 'text-pink-900' },
+    'G': { border: 'border-rose-200 hover:border-rose-400', bg: 'bg-rose-50/70 hover:bg-rose-100/90', text: 'text-rose-900' },
+    'H': { border: 'border-sky-200 hover:border-sky-400', bg: 'bg-sky-50/70 hover:bg-sky-100/90', text: 'text-sky-900' },
+    'I': { border: 'border-indigo-200 hover:border-indigo-400', bg: 'bg-indigo-50/70 hover:bg-indigo-100/90', text: 'text-indigo-900' },
+    'J': { border: 'border-teal-200 hover:border-teal-400', bg: 'bg-teal-50/70 hover:bg-teal-100/90', text: 'text-teal-900' },
+    'K': { border: 'border-lime-200 hover:border-lime-400', bg: 'bg-lime-50/70 hover:bg-lime-100/90', text: 'text-lime-900' },
+    'L': { border: 'border-fuchsia-200 hover:border-fuchsia-400', bg: 'bg-fuchsia-50/70 hover:bg-fuchsia-100/90', text: 'text-fuchsia-900' }
   }
-  return colorMap[groupLetter] || { border: 'border-gray-500/30 hover:border-gray-500/60', bg: 'bg-gray-800/30 hover:bg-gray-800/45', text: 'text-gray-300' }
+  return colorMap[groupLetter] || { border: 'border-slate-200 hover:border-slate-400', bg: 'bg-slate-50 hover:bg-slate-100', text: 'text-slate-800' }
 }
 
 interface GroupedMatches {
@@ -1055,12 +1055,12 @@ export default function App(): JSX.Element {
 
   const getMatchColor = (matchId: string) => {
     const idNum = parseInt(matchId.slice(1))
-    if (idNum <= 16) return 'border-teal-500 bg-teal-900/40 title-teal'
-    if (idNum <= 24) return 'border-blue-500 bg-blue-900/40 title-blue'
-    if (idNum <= 28) return 'border-fuchsia-500 bg-fuchsia-900/40 title-fuchsia'
-    if (idNum <= 30) return 'border-yellow-500 bg-yellow-900/40 title-yellow'
-    if (idNum === 31) return 'border-gray-400 bg-gray-800/60 title-gray'
-    return 'border-red-500 bg-red-900/60 title-red'
+    if (idNum <= 16) return 'border-teal-200 bg-teal-50/70 text-teal-900'
+    if (idNum <= 24) return 'border-blue-200 bg-blue-50/70 text-blue-900'
+    if (idNum <= 28) return 'border-fuchsia-200 bg-fuchsia-50/70 text-fuchsia-900'
+    if (idNum <= 30) return 'border-amber-200 bg-amber-50/70 text-amber-900'
+    if (idNum === 31) return 'border-slate-300 bg-slate-100/70 text-slate-800'
+    return 'border-red-300 bg-red-50/80 text-red-950'
   }
 
   const getMatchTitle = (matchId: string) => {
@@ -1084,14 +1084,14 @@ export default function App(): JSX.Element {
 
     return (
       <div className={`w-36 rounded overflow-hidden border ${colorClass} shadow-lg text-xs transition-all duration-300 hover:scale-105`}>
-        <div className="text-center font-bold text-[10px] py-1 bg-black/30 uppercase tracking-wider text-white">{title}</div>
+        <div className="text-center font-bold text-[10px] py-1 bg-black/5 uppercase tracking-wider border-b border-inherit">{title}</div>
 
         <div 
           onClick={() => isAdmin && handleWinnerSelect(matchId, 1)} 
-          className={`px-2 py-2 flex items-center border-b border-white/10 transition-colors ${winner === 1 ? 'bg-green-600 font-bold text-white' : 'text-gray-200'} ${winner === 2 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-white/10' : ''}`}
+          className={`px-2 py-2 flex items-center border-b border-black/5 transition-colors ${winner === 1 ? 'bg-green-600 font-bold text-white' : 'text-slate-700'} ${winner === 2 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-black/5' : ''}`}
         >
           {isR32 && isAdmin ? (
-            <input value={t1} onChange={(e) => handleBaseTeamChange(matchId, 1, e.target.value)} onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} onClick={(e) => e.stopPropagation()} className="bg-transparent w-full outline-none focus:bg-white/20 px-1 rounded" placeholder="Nhập tên đội..." />
+            <input value={t1} onChange={(e) => handleBaseTeamChange(matchId, 1, e.target.value)} onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} onClick={(e) => e.stopPropagation()} className="bg-transparent w-full outline-none focus:bg-black/5 px-1 rounded text-slate-800 placeholder-slate-400" placeholder="Đội..." />
           ) : (
             <span className="truncate w-full block">{t1 || '-'}</span>
           )}
@@ -1099,10 +1099,10 @@ export default function App(): JSX.Element {
 
         <div 
           onClick={() => isAdmin && handleWinnerSelect(matchId, 2)} 
-          className={`px-2 py-2 flex items-center transition-colors ${winner === 2 ? 'bg-green-600 font-bold text-white' : 'text-gray-200'} ${winner === 1 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-white/10' : ''}`}
+          className={`px-2 py-2 flex items-center transition-colors ${winner === 2 ? 'bg-green-600 font-bold text-white' : 'text-slate-700'} ${winner === 1 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-black/5' : ''}`}
         >
           {isR32 && isAdmin ? (
-            <input value={t2} onChange={(e) => handleBaseTeamChange(matchId, 2, e.target.value)} onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} onClick={(e) => e.stopPropagation()} className="bg-transparent w-full outline-none focus:bg-white/20 px-1 rounded" placeholder="Nhập tên đội..." />
+            <input value={t2} onChange={(e) => handleBaseTeamChange(matchId, 2, e.target.value)} onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} onClick={(e) => e.stopPropagation()} className="bg-transparent w-full outline-none focus:bg-black/5 px-1 rounded text-slate-800 placeholder-slate-400" placeholder="Đội..." />
           ) : (
             <span className="truncate w-full block">{t2 || '-'}</span>
           )}
@@ -1131,7 +1131,7 @@ export default function App(): JSX.Element {
                   <div
                     key={match.id}
                     onClick={() => setEditingMatch(match)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-full border ${colorInfo.bg} ${colorInfo.border} shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.03] text-xs font-bold text-white`}
+                    className={`flex items-center justify-between px-3 py-2 rounded-full border ${colorInfo.bg} ${colorInfo.border} shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.03] text-xs font-bold ${colorInfo.text}`}
                   >
                     <div className="flex items-center gap-1.5 w-[42%] justify-end text-right">
                       <span className="truncate uppercase text-[10px] tracking-tight" title={match.team1}>
@@ -1170,7 +1170,7 @@ export default function App(): JSX.Element {
   }
 
   return (
-    <div className="premium-bg text-white font-sans flex min-h-screen">
+    <div className="premium-bg text-slate-800 font-sans flex min-h-screen">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-[#131424]/90 border-r border-white/10 backdrop-blur-md shrink-0 h-screen sticky top-0 z-10">
         {/* Sidebar Header / Logo */}
@@ -1242,17 +1242,19 @@ export default function App(): JSX.Element {
             <div className="mt-auto"></div>
           )}
 
-          {/* Switch Mode button */}
-          <button
-            onClick={() => {
-              localStorage.removeItem('wc2026_auth')
-              setRole(null)
-            }}
-            className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-blue-450 hover:text-blue-350 hover:bg-blue-500/10 border border-blue-500/20 transition-all duration-200 shadow-md cursor-pointer"
-          >
-            <span className="text-base select-none">🔄</span>
-            <span>ĐỔI CHẾ ĐỘ TRUY CẬP</span>
-          </button>
+          {/* Switch Mode button - Only visible to Admins */}
+          {role === 'admin' && (
+            <button
+              onClick={() => {
+                localStorage.removeItem('wc2026_auth')
+                setRole(null)
+              }}
+              className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-blue-450 hover:text-blue-350 hover:bg-blue-500/10 border border-blue-500/20 transition-all duration-200 shadow-md cursor-pointer"
+            >
+              <span className="text-base select-none">🔄</span>
+              <span>ĐỔI CHẾ ĐỘ TRUY CẬP</span>
+            </button>
+          )}
         </nav>
 
         {/* Sidebar Footer */}
@@ -1343,18 +1345,20 @@ export default function App(): JSX.Element {
                 <div className="mt-auto"></div>
               )}
 
-              {/* Switch Mode button */}
-              <button
-                onClick={() => {
-                  localStorage.removeItem('wc2026_auth')
-                  setRole(null)
-                  setIsMobileMenuOpen(false)
-                }}
-                className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-blue-450 hover:text-blue-350 hover:bg-blue-500/10 border border-blue-500/20 transition-all duration-200 shadow-md cursor-pointer"
-              >
-                <span className="text-base select-none">🔄</span>
-                <span>ĐỔI CHẾ ĐỘ TRUY CẬP</span>
-              </button>
+              {/* Switch Mode button - Only visible to Admins */}
+              {role === 'admin' && (
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('wc2026_auth')
+                    setRole(null)
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-blue-450 hover:text-blue-350 hover:bg-blue-500/10 border border-blue-500/20 transition-all duration-200 shadow-md cursor-pointer"
+                >
+                  <span className="text-base select-none">🔄</span>
+                  <span>ĐỔI CHẾ ĐỘ TRUY CẬP</span>
+                </button>
+              )}
             </nav>
 
             <div className="p-4 border-t border-white/5 text-[9px] text-gray-500 font-bold text-center uppercase tracking-wider">
@@ -1565,7 +1569,7 @@ export default function App(): JSX.Element {
                             <div
                               key={match.id}
                               onClick={() => setEditingMatch(match)}
-                              className={`flex items-center justify-between px-3 py-1.5 rounded-full border ${colorInfo.bg} ${colorInfo.border} shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.03] text-xs font-bold text-white`}
+                              className={`flex items-center justify-between px-3 py-1.5 rounded-full border ${colorInfo.bg} ${colorInfo.border} shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.03] text-xs font-bold ${colorInfo.text}`}
                             >
                               <div className="flex items-center gap-1.5 w-[42%] justify-end text-right">
                                 <span className="truncate uppercase text-[9px] tracking-tight" title={match.team1}>
