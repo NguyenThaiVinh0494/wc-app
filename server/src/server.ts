@@ -10,8 +10,7 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// Initialize DB on startup
-initDb()
+// Initialize DB on startup (configured at the bottom of the file)
 
 // Middleware
 app.use(cors())
@@ -318,7 +317,14 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(FRONTEND_BUILD_PATH, 'index.html'))
 })
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`)
+// Start server after initializing DB and run initial sync
+initDb().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`)
+  })
+
+  console.log('[Startup] Database initialized. Running initial external score sync...')
+  performSyncExternalScores().then(res => {
+    console.log(`[Startup] Initial score sync finished. Success: ${res.success}, Updated count: ${res.updatedCount}`)
+  })
 })
