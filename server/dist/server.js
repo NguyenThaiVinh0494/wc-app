@@ -14,9 +14,9 @@ app.use(cors());
 app.use(express.json());
 // API Routes
 // 1. Get entire tournament state
-app.get('/api/state', (req, res) => {
+app.get('/api/state', async (req, res) => {
     try {
-        const db = readDb();
+        const db = await readDb();
         res.json(db);
     }
     catch (error) {
@@ -25,18 +25,18 @@ app.get('/api/state', (req, res) => {
     }
 });
 // 2. Update a group stage match score
-app.put('/api/matches/:id', (req, res) => {
+app.put('/api/matches/:id', async (req, res) => {
     const { id } = req.params;
     const { score1, score2 } = req.body;
     try {
-        const db = readDb();
+        const db = await readDb();
         const matchIndex = db.matches.findIndex(m => m.id === id);
         if (matchIndex === -1) {
             return res.status(404).json({ error: `Match with ID ${id} not found` });
         }
         db.matches[matchIndex].score1 = score1 !== null ? Number(score1) : null;
         db.matches[matchIndex].score2 = score2 !== null ? Number(score2) : null;
-        writeDb(db);
+        await writeDb(db);
         res.json({ success: true, match: db.matches[matchIndex] });
     }
     catch (error) {
@@ -45,13 +45,13 @@ app.put('/api/matches/:id', (req, res) => {
     }
 });
 // 3. Update team names in groups
-app.put('/api/groups', (req, res) => {
+app.put('/api/groups', async (req, res) => {
     const { groupNames } = req.body;
     if (!Array.isArray(groupNames)) {
         return res.status(400).json({ error: 'groupNames must be an array of arrays' });
     }
     try {
-        const db = readDb();
+        const db = await readDb();
         for (let g = 0; g < db.groups.length; g++) {
             if (!groupNames[g])
                 continue;
@@ -61,7 +61,7 @@ app.put('/api/groups', (req, res) => {
                 }
             }
         }
-        writeDb(db);
+        await writeDb(db);
         res.json({ success: true, groups: db.groups });
     }
     catch (error) {
@@ -70,10 +70,10 @@ app.put('/api/groups', (req, res) => {
     }
 });
 // 4. Update knockout bracket state (baseTeams and/or winners)
-app.put('/api/knockout', (req, res) => {
+app.put('/api/knockout', async (req, res) => {
     const { baseTeams, winners } = req.body;
     try {
-        const db = readDb();
+        const db = await readDb();
         if (baseTeams) {
             db.knockout.baseTeams = {
                 ...db.knockout.baseTeams,
@@ -86,7 +86,7 @@ app.put('/api/knockout', (req, res) => {
                 ...winners
             };
         }
-        writeDb(db);
+        await writeDb(db);
         res.json({ success: true, knockout: db.knockout });
     }
     catch (error) {
@@ -95,10 +95,10 @@ app.put('/api/knockout', (req, res) => {
     }
 });
 // 5. Reset entire tournament state
-app.post('/api/reset', (req, res) => {
+app.post('/api/reset', async (req, res) => {
     try {
-        initDb(true);
-        const db = readDb();
+        await initDb(true);
+        const db = await readDb();
         res.json({ success: true, state: db });
     }
     catch (error) {
@@ -107,10 +107,10 @@ app.post('/api/reset', (req, res) => {
     }
 });
 // 6. Bulk sync tournament state from frontend (useful for restoring state on ephemeral containers)
-app.post('/api/sync', (req, res) => {
+app.post('/api/sync', async (req, res) => {
     const { groups, matches, knockout } = req.body;
     try {
-        const db = readDb();
+        const db = await readDb();
         if (groups && Array.isArray(groups)) {
             for (let g = 0; g < db.groups.length; g++) {
                 if (!groups[g])
@@ -145,7 +145,7 @@ app.post('/api/sync', (req, res) => {
                 };
             }
         }
-        writeDb(db);
+        await writeDb(db);
         res.json({ success: true, state: db });
     }
     catch (error) {
