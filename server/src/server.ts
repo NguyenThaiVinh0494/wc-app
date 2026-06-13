@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { readDb, writeDb, initDb } from './db.js'
 
 dotenv.config()
@@ -119,6 +121,21 @@ app.post('/api/reset', (req, res) => {
     console.error('Error resetting database:', error)
     res.status(500).json({ error: 'Internal Server Error' })
   }
+})
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const FRONTEND_BUILD_PATH = path.join(__dirname, '../../dist')
+
+// Serve static files from the React frontend build
+app.use(express.static(FRONTEND_BUILD_PATH))
+
+// Fallback route for SPA client-side routing
+app.get('*', (req, res) => {
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(404).json({ error: 'API route not found' })
+  }
+  res.sendFile(path.join(FRONTEND_BUILD_PATH, 'index.html'))
 })
 
 // Start server

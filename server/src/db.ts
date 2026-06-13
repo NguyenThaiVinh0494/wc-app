@@ -12,7 +12,7 @@ import {
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const DB_DIR = path.join(__dirname, '../data')
+const DB_DIR = process.env.DATABASE_DIR || path.join(__dirname, '../data')
 const DB_FILE = path.join(DB_DIR, 'db.json')
 
 export interface DbState {
