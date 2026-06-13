@@ -146,6 +146,9 @@ app.post('/api/sync', async (req, res) => {
         if (idx !== -1) {
           db.matches[idx].score1 = m.score1 !== null ? Number(m.score1) : null
           db.matches[idx].score2 = m.score2 !== null ? Number(m.score2) : null
+          if (m.homeScorers !== undefined) db.matches[idx].homeScorers = m.homeScorers
+          if (m.awayScorers !== undefined) db.matches[idx].awayScorers = m.awayScorers
+          if (m.stadiumId !== undefined) db.matches[idx].stadiumId = m.stadiumId
         }
       })
     }
@@ -253,20 +256,31 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
         (g.home_team_name_en === aEng && g.away_team_name_en === hEng)
       )
 
-      if (apiG && apiG.time_elapsed !== 'notstarted') {
-        const homeScore = apiG.home_score !== null && apiG.home_score !== undefined ? Number(apiG.home_score) : null
-        const awayScore = apiG.away_score !== null && apiG.away_score !== undefined ? Number(apiG.away_score) : null
+      if (apiG) {
+        const homeScore = apiG.home_score !== null && apiG.home_score !== undefined && apiG.home_score !== 'null' ? Number(apiG.home_score) : null
+        const awayScore = apiG.away_score !== null && apiG.away_score !== undefined && apiG.away_score !== 'null' ? Number(apiG.away_score) : null
 
-        if (homeScore !== null && awayScore !== null && !isNaN(homeScore) && !isNaN(awayScore)) {
-          const isHomeTeam1 = apiG.home_team_name_en === hEng
-          const nextScore1 = isHomeTeam1 ? homeScore : awayScore
-          const nextScore2 = isHomeTeam1 ? awayScore : homeScore
+        const isHomeTeam1 = apiG.home_team_name_en === hEng
+        const nextScore1 = isHomeTeam1 ? homeScore : awayScore
+        const nextScore2 = isHomeTeam1 ? awayScore : homeScore
 
-          if (match.score1 !== nextScore1 || match.score2 !== nextScore2) {
-            match.score1 = nextScore1
-            match.score2 = nextScore2
-            updatedCount++
-          }
+        const nextHomeScorers = apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null
+        const nextAwayScorers = apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null
+        const nextStadiumId = apiG.stadium_id ? String(apiG.stadium_id) : null
+
+        if (
+          match.score1 !== nextScore1 || 
+          match.score2 !== nextScore2 ||
+          match.homeScorers !== (isHomeTeam1 ? nextHomeScorers : nextAwayScorers) ||
+          match.awayScorers !== (isHomeTeam1 ? nextAwayScorers : nextHomeScorers) ||
+          match.stadiumId !== nextStadiumId
+        ) {
+          match.score1 = nextScore1
+          match.score2 = nextScore2
+          match.homeScorers = isHomeTeam1 ? nextHomeScorers : nextAwayScorers
+          match.awayScorers = isHomeTeam1 ? nextAwayScorers : nextHomeScorers
+          match.stadiumId = nextStadiumId
+          updatedCount++
         }
       }
     })
@@ -290,6 +304,17 @@ app.post('/api/sync-external-scores', async (req, res) => {
     res.json({ success: true, updatedCount: result.updatedCount, matches: db.matches })
   } else {
     res.status(502).json({ error: 'Failed to sync scores from external server' })
+  }
+})
+
+// 8. Admin Verification Endpoint
+app.post('/api/login-admin', (req, res) => {
+  const { password } = req.body
+  const expectedPassword = process.env.ADMIN_PASSWORD || 'admin2026'
+  if (password === expectedPassword) {
+    res.json({ success: true })
+  } else {
+    res.status(401).json({ success: false, error: 'Sai mật khẩu xác minh Admin!' })
   }
 })
 

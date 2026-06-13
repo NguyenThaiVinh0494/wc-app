@@ -20,6 +20,9 @@ type GroupMatch = {
   dayOfWeek: string
   score1: number | null
   score2: number | null
+  homeScorers?: string | null
+  awayScorers?: string | null
+  stadiumId?: string | null
 }
 
 const createTeam = (name: string): Team => ({
@@ -109,6 +112,25 @@ const TEAMS_INFO: { [name: string]: { flag: string; group: string } } = {
   'Croatia': { flag: '🇭🇷', group: 'L' },
   'Ghana': { flag: '🇬🇭', group: 'L' },
   'Panama': { flag: '🇵🇦', group: 'L' }
+}
+
+const STADIUMS_INFO: { [id: string]: { name: string; city: string; country: string } } = {
+  '1': { name: 'Sân vận động Azteca', city: 'Mexico City', country: 'Mexico' },
+  '2': { name: 'Sân vận động Akron', city: 'Guadalajara', country: 'Mexico' },
+  '3': { name: 'Sân vận động BBVA', city: 'Monterrey', country: 'Mexico' },
+  '4': { name: 'Sân vận động AT&T', city: 'Dallas', country: 'Mỹ' },
+  '5': { name: 'Sân vận động NRG', city: 'Houston', country: 'Mỹ' },
+  '6': { name: 'Sân vận động Arrowhead', city: 'Kansas City', country: 'Mỹ' },
+  '7': { name: 'Sân vận động Mercedes-Benz', city: 'Atlanta', country: 'Mỹ' },
+  '8': { name: 'Sân vận động Hard Rock', city: 'Miami', country: 'Mỹ' },
+  '9': { name: 'Sân vận động Gillette', city: 'Boston', country: 'Mỹ' },
+  '10': { name: 'Sân vận động Lincoln Financial Field', city: 'Philadelphia', country: 'Mỹ' },
+  '11': { name: 'Sân vận động MetLife', city: 'New York/New Jersey', country: 'Mỹ' },
+  '12': { name: 'Sân vận động BMO Field', city: 'Toronto', country: 'Canada' },
+  '13': { name: 'Sân vận động BC Place', city: 'Vancouver', country: 'Canada' },
+  '14': { name: 'Sân vận động Lumen Field', city: 'Seattle', country: 'Mỹ' },
+  '15': { name: 'Sân vận động Levi\'s', city: 'San Francisco Bay Area', country: 'Mỹ' },
+  '16': { name: 'Sân vận động SoFi', city: 'Los Angeles', country: 'Mỹ' }
 }
 
 const initialR32Teams: { [k: string]: string } = {
@@ -476,10 +498,146 @@ const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fix
 }
 
 export default function App(): JSX.Element {
+  const [role, setRole] = useState<'admin' | 'guest' | null>(() => {
+    try {
+      const saved = localStorage.getItem('wc2026_auth')
+      if (saved) {
+        const { roleVal, expiry } = JSON.parse(saved)
+        if (Date.now() < expiry) {
+          return roleVal
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+    return null
+  })
+
   const [activeTab, setActiveTab] = useState<'landing' | 'standings' | 'fixtures' | 'knockout'>('landing')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
   const [fixtureView, setFixtureView] = useState<'date' | 'group'>('group')
   const [isSyncingScores, setIsSyncingScores] = useState<boolean>(false)
+
+  const handleSelectRole = (selectedRole: 'admin' | 'guest') => {
+    const authData = {
+      roleVal: selectedRole,
+      expiry: Date.now() + 2 * 60 * 60 * 1000 // 2 hours
+    }
+    localStorage.setItem('wc2026_auth', JSON.stringify(authData))
+    setRole(selectedRole)
+  }
+
+  // Role selector component
+  const RoleSelectorModal = () => {
+    const [pin, setPin] = useState('')
+    const [errorMsg, setErrorMsg] = useState('')
+    const [showPinInput, setShowPinInput] = useState(false)
+    const [isVerifying, setIsVerifying] = useState(false)
+
+    const handleVerifyPin = (e: React.FormEvent) => {
+      e.preventDefault()
+      setErrorMsg('')
+      setIsVerifying(true)
+      
+      fetch('/api/login-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pin })
+      })
+      .then(async res => {
+        setIsVerifying(false)
+        if (res.ok) {
+          handleSelectRole('admin')
+        } else {
+          const data = await res.json()
+          setErrorMsg(data.error || 'Sai mã PIN xác minh Admin!')
+        }
+      })
+      .catch(err => {
+        setIsVerifying(false)
+        console.error(err)
+        setErrorMsg('Không thể kết nối tới server!')
+      })
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+        <div className="glass-card w-full max-w-md rounded-3xl p-8 border border-white/10 shadow-2xl flex flex-col gap-6 text-center text-white relative overflow-hidden animate-slide-up">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.1),transparent_60%)] pointer-events-none"></div>
+          
+          <div className="text-5xl select-none animate-bounce">🏆</div>
+          <div className="flex flex-col">
+            <h2 className="text-xl md:text-2xl font-black text-gradient-animate uppercase">World Cup 2026</h2>
+            <span className="text-[10px] text-yellow-400 font-extrabold uppercase tracking-widest mt-1">Hệ Thống Quản Lý & Cập Nhật Tỉ Số</span>
+          </div>
+
+          {!showPinInput ? (
+            <div className="flex flex-col gap-4 mt-2 z-10">
+              <p className="text-xs text-gray-400 font-medium px-4 leading-relaxed">
+                Chào mừng bạn! Vui lòng chọn chế độ truy cập. Quyền truy cập sẽ được lưu trong vòng 2 tiếng.
+              </p>
+              
+              <button
+                onClick={() => handleSelectRole('guest')}
+                className="w-full py-3 bg-gradient-to-r from-teal-500/20 to-blue-500/20 border border-teal-500/30 hover:border-teal-400 text-teal-300 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-lg shadow-teal-500/5 cursor-pointer"
+              >
+                👀 Khách xem (View-Only)
+              </button>
+
+              <button
+                onClick={() => setShowPinInput(true)}
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-md shadow-blue-500/20 cursor-pointer"
+              >
+                🔐 Administrator (Cập nhật dữ liệu)
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleVerifyPin} className="flex flex-col gap-4 mt-2 z-10">
+              <p className="text-xs text-gray-400 font-semibold">
+                Nhập mã PIN Admin để truy cập quyền quản trị:
+              </p>
+              
+              <input
+                type="password"
+                placeholder="Nhập mã PIN Admin..."
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                className="w-full h-12 bg-black/40 border border-gray-700 rounded-xl text-center text-base font-bold text-white outline-none focus:border-blue-500 transition-colors"
+                autoFocus
+              />
+
+              {errorMsg && (
+                <div className="text-xs font-bold text-red-400 bg-red-950/20 border border-red-500/20 py-2 rounded-lg">
+                  ❌ {errorMsg}
+                </div>
+              )}
+
+              <div className="flex gap-2.5 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPinInput(false)
+                    setErrorMsg('')
+                    setPin('')
+                  }}
+                  className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Quay lại
+                </button>
+                <button
+                  type="submit"
+                  disabled={isVerifying}
+                  className="flex-1 py-3 bg-green-500 hover:bg-green-400 text-black rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {isVerifying ? 'Đang xác minh...' : 'Xác nhận'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   const [groupNames, setGroupNames] = useState<string[][]>(() => {
     const saved = localStorage.getItem('wc2026_groupNames')
@@ -922,21 +1080,28 @@ export default function App(): JSX.Element {
     const isR32 = parseInt(matchId.slice(1)) <= 16
     const colorClass = getMatchColor(matchId)
     const title = getMatchTitle(matchId)
+    const isAdmin = role === 'admin'
 
     return (
       <div className={`w-36 rounded overflow-hidden border ${colorClass} shadow-lg text-xs transition-all duration-300 hover:scale-105`}>
         <div className="text-center font-bold text-[10px] py-1 bg-black/30 uppercase tracking-wider text-white">{title}</div>
 
-        <div onClick={() => handleWinnerSelect(matchId, 1)} className={`px-2 py-2 flex items-center border-b border-white/10 cursor-pointer transition-colors ${winner === 1 ? 'bg-green-600 font-bold text-white' : 'hover:bg-white/10 text-gray-200'} ${winner === 2 ? 'opacity-40' : ''}`}>
-          {isR32 ? (
+        <div 
+          onClick={() => isAdmin && handleWinnerSelect(matchId, 1)} 
+          className={`px-2 py-2 flex items-center border-b border-white/10 transition-colors ${winner === 1 ? 'bg-green-600 font-bold text-white' : 'text-gray-200'} ${winner === 2 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-white/10' : ''}`}
+        >
+          {isR32 && isAdmin ? (
             <input value={t1} onChange={(e) => handleBaseTeamChange(matchId, 1, e.target.value)} onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} onClick={(e) => e.stopPropagation()} className="bg-transparent w-full outline-none focus:bg-white/20 px-1 rounded" placeholder="Nhập tên đội..." />
           ) : (
             <span className="truncate w-full block">{t1 || '-'}</span>
           )}
         </div>
 
-        <div onClick={() => handleWinnerSelect(matchId, 2)} className={`px-2 py-2 flex items-center cursor-pointer transition-colors ${winner === 2 ? 'bg-green-600 font-bold text-white' : 'hover:bg-white/10 text-gray-200'} ${winner === 1 ? 'opacity-40' : ''}`}>
-          {isR32 ? (
+        <div 
+          onClick={() => isAdmin && handleWinnerSelect(matchId, 2)} 
+          className={`px-2 py-2 flex items-center transition-colors ${winner === 2 ? 'bg-green-600 font-bold text-white' : 'text-gray-200'} ${winner === 1 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-white/10' : ''}`}
+        >
+          {isR32 && isAdmin ? (
             <input value={t2} onChange={(e) => handleBaseTeamChange(matchId, 2, e.target.value)} onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} onClick={(e) => e.stopPropagation()} className="bg-transparent w-full outline-none focus:bg-white/20 px-1 rounded" placeholder="Nhập tên đội..." />
           ) : (
             <span className="truncate w-full block">{t2 || '-'}</span>
@@ -1052,23 +1217,41 @@ export default function App(): JSX.Element {
             )
           })}
           
-          {/* Auto update scores button */}
-          <button
-            onClick={handleSyncExternalScores}
-            disabled={isSyncingScores}
-            className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md shadow-emerald-500/5 cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
-          >
-            <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
-            <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỈ SỐ TỰ ĐỘNG'}</span>
-          </button>
+          {role === 'admin' ? (
+            <>
+              {/* Auto update scores button */}
+              <button
+                onClick={handleSyncExternalScores}
+                disabled={isSyncingScores}
+                className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md shadow-emerald-500/5 cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
+              >
+                <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
+                <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỈ SỐ TỰ ĐỘNG'}</span>
+              </button>
 
-          {/* Reset button at the bottom of navigation */}
+              {/* Reset button at the bottom of navigation */}
+              <button
+                onClick={handleResetAll}
+                className="mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md shadow-red-500/5 cursor-pointer animate-pulse hover:animate-none"
+              >
+                <span className="text-base select-none">🔄</span>
+                <span>KHÔI PHỤC BAN ĐẦU</span>
+              </button>
+            </>
+          ) : (
+            <div className="mt-auto"></div>
+          )}
+
+          {/* Switch Mode button */}
           <button
-            onClick={handleResetAll}
-            className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md shadow-red-500/5 cursor-pointer animate-pulse hover:animate-none"
+            onClick={() => {
+              localStorage.removeItem('wc2026_auth')
+              setRole(null)
+            }}
+            className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-blue-450 hover:text-blue-350 hover:bg-blue-500/10 border border-blue-500/20 transition-all duration-200 shadow-md cursor-pointer"
           >
             <span className="text-base select-none">🔄</span>
-            <span>KHÔI PHỤC BAN ĐẦU</span>
+            <span>ĐỔI CHẾ ĐỘ TRUY CẬP</span>
           </button>
         </nav>
 
@@ -1136,22 +1319,41 @@ export default function App(): JSX.Element {
                 )
               })}
 
-              {/* Auto update scores button */}
-              <button
-                onClick={handleSyncExternalScores}
-                disabled={isSyncingScores}
-                className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
-              >
-                <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
-                <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỶ SỐ TỰ ĐỘNG'}</span>
-              </button>
+              {role === 'admin' ? (
+                <>
+                  {/* Auto update scores button */}
+                  <button
+                    onClick={handleSyncExternalScores}
+                    disabled={isSyncingScores}
+                    className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
+                  >
+                    <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
+                    <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỶ SỐ TỰ ĐỘNG'}</span>
+                  </button>
 
+                  <button
+                    onClick={handleResetAll}
+                    className="mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md cursor-pointer"
+                  >
+                    <span className="text-base select-none">🔄</span>
+                    <span>KHÔI PHỤC BAN ĐẦU</span>
+                  </button>
+                </>
+              ) : (
+                <div className="mt-auto"></div>
+              )}
+
+              {/* Switch Mode button */}
               <button
-                onClick={handleResetAll}
-                className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md cursor-pointer"
+                onClick={() => {
+                  localStorage.removeItem('wc2026_auth')
+                  setRole(null)
+                  setIsMobileMenuOpen(false)
+                }}
+                className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-blue-450 hover:text-blue-350 hover:bg-blue-500/10 border border-blue-500/20 transition-all duration-200 shadow-md cursor-pointer"
               >
                 <span className="text-base select-none">🔄</span>
-                <span>KHÔI PHỤC BAN ĐẦU</span>
+                <span>ĐỔI CHẾ ĐỘ TRUY CẬP</span>
               </button>
             </nav>
 
@@ -1226,7 +1428,11 @@ export default function App(): JSX.Element {
                                 <td className="px-3 py-2 flex items-center gap-2 border-l-2 border-transparent hover:border-blue-500">
                                   <span className="w-4 text-center text-gray-500 font-bold">{tIdx + 1}</span>
                                   <span className="text-base select-none shrink-0">{teamInfo.flag}</span>
-                                  <input value={team.name} onChange={(e) => handleTeamStatChange(gIdx, tIdx, 'name', e.target.value)} onBlur={() => handlePersistGroups(groupNames)} className="bg-transparent text-white font-medium w-24 md:w-32 outline-none focus:bg-white/10 px-1 py-1 rounded" />
+                                  {role === 'admin' ? (
+                                    <input value={team.name} onChange={(e) => handleTeamStatChange(gIdx, tIdx, 'name', e.target.value)} onBlur={() => handlePersistGroups(groupNames)} className="bg-transparent text-white font-medium w-24 md:w-32 outline-none focus:bg-white/10 px-1 py-1 rounded" />
+                                  ) : (
+                                    <span className="text-white font-medium px-1 py-1">{team.name}</span>
+                                  )}
                                 </td>
                                 <td className="px-2 py-2 text-center text-gray-300 font-medium">{team.played}</td>
                                 <td className="px-2 py-2 text-center text-gray-300 font-medium">{team.won}</td>
@@ -1406,12 +1612,14 @@ export default function App(): JSX.Element {
               
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 sticky left-0 px-1">
                 <h3 className="text-xl font-bold border-l-4 border-blue-500 pl-3">SƠ ĐỒ THI ĐẤU</h3>
-                <button
-                  onClick={handleAutoFillKnockout}
-                  className="mt-2 md:mt-0 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-extrabold text-xs rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-1.5"
-                >
-                  🔄 CẬP NHẬT ĐỘI TỪ VÒNG BẢNG
-                </button>
+                {role === 'admin' && (
+                  <button
+                    onClick={handleAutoFillKnockout}
+                    className="mt-2 md:mt-0 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-extrabold text-xs rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                  >
+                    🔄 CẬP NHẬT ĐỘI TỪ VÒNG BẢNG
+                  </button>
+                )}
               </div>
 
               <div className="overflow-x-auto pb-8">
@@ -1438,83 +1646,144 @@ export default function App(): JSX.Element {
         </main>
       </div>
 
-      {/* Modern Dialog Modal to input Match Scores */}
-      {editingMatch && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-[#1e1e2d] border border-gray-700 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-transform">
-            <div className="bg-gradient-to-r from-teal-500/10 to-blue-500/10 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-              <h3 className="font-extrabold text-sm tracking-tight text-white uppercase">Cập Nhật Tỉ Số</h3>
-              <button
-                onClick={() => setEditingMatch(null)}
-                className="text-gray-400 hover:text-white transition-colors text-xl font-bold"
-              >
-                &times;
-              </button>
-            </div>
+      {/* Modern Dialog Modal to view/input Match Scores */}
+      {editingMatch && (() => {
+        const stadium = editingMatch.stadiumId ? STADIUMS_INFO[editingMatch.stadiumId] : null
+        
+        const parseScorers = (scorersStr: string | null | undefined): string[] => {
+          if (!scorersStr || scorersStr === 'null') return []
+          try {
+            let clean = scorersStr.replace(/[{}"“‘”’[\]]/g, '')
+            if (!clean.trim()) return []
+            return clean.split(',').map(s => s.trim())
+          } catch (e) {
+            return [scorersStr]
+          }
+        }
 
-            <div className="p-6">
-              <div className="flex items-center justify-between gap-4 mb-6">
-                <div className="flex flex-col items-center gap-2 w-[42%] text-center">
-                  <span className="text-3xl select-none">{(TEAMS_INFO[editingMatch.team1] || { flag: '🏳️' }).flag}</span>
-                  <span className="font-bold text-xs text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team1}>{editingMatch.team1}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="-"
-                    value={modalScore1}
-                    onChange={(e) => setModalScore1(e.target.value)}
-                    className="w-14 h-12 bg-black/40 border border-gray-700 rounded-lg text-center text-xl font-bold text-white outline-none focus:border-green-500 transition-colors"
-                  />
-                </div>
+        const homeScorersList = parseScorers(editingMatch.homeScorers)
+        const awayScorersList = parseScorers(editingMatch.awayScorers)
+        const isAdmin = role === 'admin'
 
-                <div className="text-gray-500 font-black text-xs uppercase pt-8">VS</div>
-
-                <div className="flex flex-col items-center gap-2 w-[42%] text-center">
-                  <span className="text-3xl select-none">{(TEAMS_INFO[editingMatch.team2] || { flag: '🏳️' }).flag}</span>
-                  <span className="font-bold text-xs text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team2}>{editingMatch.team2}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="-"
-                    value={modalScore2}
-                    onChange={(e) => setModalScore2(e.target.value)}
-                    className="w-14 h-12 bg-black/40 border border-gray-700 rounded-lg text-center text-xl font-bold text-white outline-none focus:border-green-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2 justify-end mt-4">
-                <button
-                  onClick={() => {
-                    handleSaveScore(editingMatch.id, null, null)
-                    setEditingMatch(null)
-                  }}
-                  className="px-3 py-2 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-[10px] font-bold transition-all"
-                >
-                  Xóa Tỉ Số
-                </button>
+        return (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+            <div className="bg-[#1e1e2d] border border-gray-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-transform">
+              <div className="bg-gradient-to-r from-teal-500/10 to-blue-500/10 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+                <h3 className="font-extrabold text-sm tracking-tight text-white uppercase">
+                  {isAdmin ? 'Cập Nhật Tỉ Số' : 'Thông Tin Trận Đấu'}
+                </h3>
                 <button
                   onClick={() => setEditingMatch(null)}
-                  className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-[10px] font-bold transition-all"
+                  className="text-gray-400 hover:text-white transition-colors text-xl font-bold"
                 >
-                  Hủy
+                  &times;
                 </button>
-                <button
-                  onClick={() => {
-                    const s1 = modalScore1 === '' ? null : Number(modalScore1)
-                    const s2 = modalScore2 === '' ? null : Number(modalScore2)
-                    handleSaveScore(editingMatch.id, s1, s2)
-                    setEditingMatch(null)
-                  }}
-                  className="px-4 py-2 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-[10px] transition-all shadow-md shadow-green-500/20"
-                >
-                  Lưu
-                </button>
+              </div>
+
+              <div className="p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col items-center gap-2 w-[42%] text-center">
+                    <span className="text-3xl select-none">{(TEAMS_INFO[editingMatch.team1] || { flag: '🏳️' }).flag}</span>
+                    <span className="font-bold text-xs text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team1}>{editingMatch.team1}</span>
+                    {isAdmin ? (
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="-"
+                        value={modalScore1}
+                        onChange={(e) => setModalScore1(e.target.value)}
+                        className="w-14 h-12 bg-black/40 border border-gray-700 rounded-lg text-center text-xl font-bold text-white outline-none focus:border-green-500 transition-colors"
+                      />
+                    ) : (
+                      <span className="text-3xl font-black text-white mt-1">{editingMatch.score1 !== null ? editingMatch.score1 : '-'}</span>
+                    )}
+
+                    {homeScorersList.length > 0 && (
+                      <div className="text-[10px] text-gray-400 mt-2 font-medium bg-black/25 py-1 px-2 rounded-lg w-full text-center">
+                        {homeScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-gray-500 font-black text-xs uppercase self-start pt-6">VS</div>
+
+                  <div className="flex flex-col items-center gap-2 w-[42%] text-center">
+                    <span className="text-3xl select-none">{(TEAMS_INFO[editingMatch.team2] || { flag: '🏳️' }).flag}</span>
+                    <span className="font-bold text-xs text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team2}>{editingMatch.team2}</span>
+                    {isAdmin ? (
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="-"
+                        value={modalScore2}
+                        onChange={(e) => setModalScore2(e.target.value)}
+                        className="w-14 h-12 bg-black/40 border border-gray-700 rounded-lg text-center text-xl font-bold text-white outline-none focus:border-green-500 transition-colors"
+                      />
+                    ) : (
+                      <span className="text-3xl font-black text-white mt-1">{editingMatch.score2 !== null ? editingMatch.score2 : '-'}</span>
+                    )}
+
+                    {awayScorersList.length > 0 && (
+                      <div className="text-[10px] text-gray-400 mt-2 font-medium bg-black/25 py-1 px-2 rounded-lg w-full text-center">
+                        {awayScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {stadium && (
+                  <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-1 text-center">
+                    <span className="text-[10px] uppercase font-bold text-gray-400">Sân vận động</span>
+                    <span className="text-xs font-extrabold text-yellow-400">{stadium.name}</span>
+                    <span className="text-[10px] text-gray-400 font-medium">{stadium.city}, {stadium.country}</span>
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-end mt-2 border-t border-white/5 pt-4">
+                  {isAdmin ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          handleSaveScore(editingMatch.id, null, null)
+                          setEditingMatch(null)
+                        }}
+                        className="px-3 py-2 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-[10px] font-bold transition-all"
+                      >
+                        Xóa Tỉ Số
+                      </button>
+                      <button
+                        onClick={() => setEditingMatch(null)}
+                        className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-[10px] font-bold transition-all"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        onClick={() => {
+                          const s1 = modalScore1 === '' ? null : Number(modalScore1)
+                          const s2 = modalScore2 === '' ? null : Number(modalScore2)
+                          handleSaveScore(editingMatch.id, s1, s2)
+                          setEditingMatch(null)
+                        }}
+                        className="px-4 py-2 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-[10px] transition-all shadow-md shadow-green-500/20"
+                      >
+                        Lưu
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setEditingMatch(null)}
+                      className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-md cursor-pointer"
+                    >
+                      Đóng
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
+      {role === null && <RoleSelectorModal />}
     </div>
   )
 }

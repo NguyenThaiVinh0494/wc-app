@@ -18,6 +18,9 @@ export interface GroupMatch {
   dayOfWeek: string
   score1: number | null
   score2: number | null
+  homeScorers?: string | null
+  awayScorers?: string | null
+  stadiumId?: string | null
 }
 
 const createTeam = (name: string): Team => ({
