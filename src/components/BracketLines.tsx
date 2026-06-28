@@ -23,44 +23,44 @@ export const BracketLines: React.FC<BracketLinesProps> = ({ winners }) => {
       }
 
       const flowConnections: { target: string; source: string; side: 'left' | 'right' }[] = [
-        // Col 2 targets (Left side)
+        // Left Side: Col 1 to Col 2
         { target: 'm17', source: 'm2', side: 'right' },
         { target: 'm17', source: 'm5', side: 'right' },
         { target: 'm18', source: 'm1', side: 'right' },
         { target: 'm18', source: 'm3', side: 'right' },
-        { target: 'm19', source: 'm4', side: 'right' },
-        { target: 'm19', source: 'm6', side: 'right' },
-        { target: 'm20', source: 'm7', side: 'right' },
-        { target: 'm20', source: 'm8', side: 'right' },
+        { target: 'm21', source: 'm11', side: 'right' },
+        { target: 'm21', source: 'm12', side: 'right' },
+        { target: 'm22', source: 'm9', side: 'right' },
+        { target: 'm22', source: 'm8', side: 'right' },
 
-        // Col 3 targets (Left side)
+        // Left Side: Col 2 to Col 3
         { target: 'm25', source: 'm17', side: 'right' },
         { target: 'm25', source: 'm18', side: 'right' },
-        { target: 'm26', source: 'm19', side: 'right' },
-        { target: 'm26', source: 'm20', side: 'right' },
+        { target: 'm27', source: 'm21', side: 'right' },
+        { target: 'm27', source: 'm22', side: 'right' },
 
-        // Col 4 targets (Left side)
+        // Left Side: Col 3 to Col 4
         { target: 'm29', source: 'm25', side: 'right' },
-        { target: 'm29', source: 'm26', side: 'right' },
+        { target: 'm29', source: 'm27', side: 'right' },
 
-        // Col 8 targets (Right side)
-        { target: 'm21', source: 'm11', side: 'left' },
-        { target: 'm21', source: 'm12', side: 'left' },
-        { target: 'm22', source: 'm9', side: 'left' },
-        { target: 'm22', source: 'm10', side: 'left' },
+        // Right Side: Col 9 to Col 8
+        { target: 'm19', source: 'm4', side: 'left' },
+        { target: 'm19', source: 'm6', side: 'left' },
+        { target: 'm20', source: 'm7', side: 'left' },
+        { target: 'm20', source: 'm10', side: 'left' },
         { target: 'm23', source: 'm14', side: 'left' },
         { target: 'm23', source: 'm16', side: 'left' },
         { target: 'm24', source: 'm13', side: 'left' },
         { target: 'm24', source: 'm15', side: 'left' },
 
-        // Col 7 targets (Right side)
-        { target: 'm27', source: 'm21', side: 'left' },
-        { target: 'm27', source: 'm22', side: 'left' },
+        // Right Side: Col 8 to Col 7
+        { target: 'm26', source: 'm19', side: 'left' },
+        { target: 'm26', source: 'm20', side: 'left' },
         { target: 'm28', source: 'm23', side: 'left' },
         { target: 'm28', source: 'm24', side: 'left' },
 
-        // Col 6 targets (Right side)
-        { target: 'm30', source: 'm27', side: 'left' },
+        // Right Side: Col 7 to Col 6
+        { target: 'm30', source: 'm26', side: 'left' },
         { target: 'm30', source: 'm28', side: 'left' },
 
         // Finals target from Col 4 and Col 6 (m32 is center)
