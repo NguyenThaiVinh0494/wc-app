@@ -60,6 +60,41 @@ export const getDefaultState = (): DbState => ({
 })
 
 // Synchronous local file helpers for fallback
+function migrateKnockoutMatches(db: any): boolean {
+  let changed = false
+  if (db && db.knockout) {
+    if (db.knockout.matches) {
+      const m8 = db.knockout.matches.find((m: any) => m.id === 'm8')
+      const m10 = db.knockout.matches.find((m: any) => m.id === 'm10')
+      
+      if (m8 && m8.stadiumId === '7') {
+        m8.stadiumId = '14'
+        m8.team1 = 'Belgium'
+        m8.team2 = 'Senegal'
+        changed = true
+      }
+      
+      if (m10 && m10.stadiumId === '14') {
+        m10.stadiumId = '7'
+        m10.team1 = 'England'
+        m10.team2 = 'DR Congo'
+        changed = true
+      }
+    }
+    
+    if (db.knockout.baseTeams) {
+      if (db.knockout.baseTeams.m8_t1 === 'Nhất Bảng L') {
+        db.knockout.baseTeams.m8_t1 = 'Nhất Bảng G'
+        db.knockout.baseTeams.m8_t2 = 'Hạng 3 A/E/H/I/J'
+        db.knockout.baseTeams.m10_t1 = 'Nhất Bảng L'
+        db.knockout.baseTeams.m10_t2 = 'Hạng 3 E/H/I/J/K'
+        changed = true
+      }
+    }
+  }
+  return changed
+}
+
 function readLocalDb(): DbState {
   try {
     if (!fs.existsSync(DB_FILE)) {
@@ -75,6 +110,11 @@ function readLocalDb(): DbState {
       db.knockout.matches = JSON.parse(JSON.stringify(initialKnockoutMatches))
       changed = true
     }
+    
+    if (migrateKnockoutMatches(db)) {
+      changed = true
+    }
+    
     if (changed) {
       writeLocalDb(db)
     }
@@ -127,6 +167,10 @@ export async function readDb(): Promise<DbState> {
       changed = true
     } else if (!db.knockout.matches || db.knockout.matches.length === 0) {
       db.knockout.matches = JSON.parse(JSON.stringify(initialKnockoutMatches))
+      changed = true
+    }
+    
+    if (migrateKnockoutMatches(db)) {
       changed = true
     }
     
