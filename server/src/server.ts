@@ -36,17 +36,45 @@ app.put('/api/matches/:id', async (req, res) => {
 
   try {
     const db = await readDb()
-    const matchIndex = db.matches.findIndex(m => m.id === id)
 
-    if (matchIndex === -1) {
-      return res.status(404).json({ error: `Match with ID ${id} not found` })
+    if (id.startsWith('gm')) {
+      const matchIndex = db.matches.findIndex(m => m.id === id)
+      if (matchIndex === -1) {
+        return res.status(404).json({ error: `Match with ID ${id} not found` })
+      }
+      db.matches[matchIndex].score1 = score1 !== null ? Number(score1) : null
+      db.matches[matchIndex].score2 = score2 !== null ? Number(score2) : null
+      await writeDb(db)
+      res.json({ success: true, match: db.matches[matchIndex] })
+    } else {
+      if (!db.knockout.matches) {
+        db.knockout.matches = []
+      }
+      const matchIndex = db.knockout.matches.findIndex(m => m.id === id)
+      if (matchIndex === -1) {
+        return res.status(404).json({ error: `Knockout match with ID ${id} not found` })
+      }
+      
+      const s1 = score1 !== null ? Number(score1) : null
+      const s2 = score2 !== null ? Number(score2) : null
+      
+      db.knockout.matches[matchIndex].score1 = s1
+      db.knockout.matches[matchIndex].score2 = s2
+
+      // Automatically determine winner if score is decisive
+      if (s1 !== null && s2 !== null) {
+        if (s1 > s2) {
+          db.knockout.winners[id] = 1
+        } else if (s2 > s1) {
+          db.knockout.winners[id] = 2
+        }
+      } else {
+        db.knockout.winners[id] = null
+      }
+
+      await writeDb(db)
+      res.json({ success: true, match: db.knockout.matches[matchIndex], knockout: db.knockout })
     }
-
-    db.matches[matchIndex].score1 = score1 !== null ? Number(score1) : null
-    db.matches[matchIndex].score2 = score2 !== null ? Number(score2) : null
-
-    await writeDb(db)
-    res.json({ success: true, match: db.matches[matchIndex] })
   } catch (error) {
     console.error('Error updating match score:', error)
     res.status(500).json({ error: 'Internal Server Error' })
@@ -166,6 +194,21 @@ app.post('/api/sync', async (req, res) => {
           ...knockout.winners
         }
       }
+      if (knockout.matches && Array.isArray(knockout.matches)) {
+        if (!db.knockout.matches) db.knockout.matches = []
+        knockout.matches.forEach((m: any) => {
+          const idx = db.knockout.matches.findIndex(dm => dm.id === m.id)
+          if (idx !== -1) {
+            db.knockout.matches[idx].score1 = m.score1 !== null ? Number(m.score1) : null
+            db.knockout.matches[idx].score2 = m.score2 !== null ? Number(m.score2) : null
+            if (m.team1 !== undefined) db.knockout.matches[idx].team1 = m.team1
+            if (m.team2 !== undefined) db.knockout.matches[idx].team2 = m.team2
+            if (m.homeScorers !== undefined) db.knockout.matches[idx].homeScorers = m.homeScorers
+            if (m.awayScorers !== undefined) db.knockout.matches[idx].awayScorers = m.awayScorers
+            if (m.stadiumId !== undefined) db.knockout.matches[idx].stadiumId = m.stadiumId
+          }
+        })
+      }
     }
 
     await writeDb(db)
@@ -227,6 +270,22 @@ const VIETNAMESE_TO_ENGLISH_TEAMS: { [key: string]: string } = {
   'Panama': 'Panama'
 }
 
+const ENGLISH_TO_VIETNAMESE_TEAMS: { [key: string]: string } = {}
+for (const [vn, eng] of Object.entries(VIETNAMESE_TO_ENGLISH_TEAMS)) {
+  ENGLISH_TO_VIETNAMESE_TEAMS[eng] = vn
+}
+
+const API_KO_MAPPING: { [apiId: string]: string } = {
+  '73': 'm1',  '74': 'm2',  '75': 'm3',  '76': 'm4',
+  '77': 'm5',  '78': 'm6',  '79': 'm7',  '80': 'm8',
+  '81': 'm9',  '82': 'm10', '83': 'm11', '84': 'm12',
+  '85': 'm13', '86': 'm14', '87': 'm15', '88': 'm16',
+  '89': 'm17', '90': 'm18', '91': 'm19', '92': 'm20',
+  '93': 'm21', '94': 'm22', '95': 'm23', '96': 'm24',
+  '97': 'm25', '99': 'm26', '98': 'm27', '100': 'm28',
+  '101': 'm29', '102': 'm30', '103': 'm31', '104': 'm32'
+}
+
 // Helper function to perform external score sync
 async function performSyncExternalScores(): Promise<{ success: boolean; updatedCount: number }> {
   try {
@@ -247,6 +306,7 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
 
     let updatedCount = 0
 
+    // 1. Sync group stage matches
     db.matches.forEach((match) => {
       const hEng = VIETNAMESE_TO_ENGLISH_TEAMS[match.team1] || match.team1
       const aEng = VIETNAMESE_TO_ENGLISH_TEAMS[match.team2] || match.team2
@@ -287,6 +347,108 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
       }
     })
 
+    // 2. Sync knockout matches
+    if (!db.knockout.matches) {
+      db.knockout.matches = []
+    }
+
+    db.knockout.matches.forEach((match) => {
+      // Find matching API match ID
+      const apiId = Object.keys(API_KO_MAPPING).find(key => API_KO_MAPPING[key] === match.id)
+      if (!apiId) return
+
+      const apiG = apiGames.find((g: any) => String(g.id) === apiId)
+      if (apiG) {
+        // Sync teams
+        const hEng = apiG.home_team_name_en
+        const aEng = apiG.away_team_name_en
+
+        const nextTeam1 = ENGLISH_TO_VIETNAMESE_TEAMS[hEng] || hEng || apiG.home_team_label || '-'
+        const nextTeam2 = ENGLISH_TO_VIETNAMESE_TEAMS[aEng] || aEng || apiG.away_team_label || '-'
+
+        const homeScore = apiG.home_score !== null && apiG.home_score !== undefined && apiG.home_score !== 'null' ? Number(apiG.home_score) : null
+        const awayScore = apiG.away_score !== null && apiG.away_score !== undefined && apiG.away_score !== 'null' ? Number(apiG.away_score) : null
+
+        const isNotStarted = apiG.time_elapsed === 'notstarted'
+        const nextScore1 = isNotStarted ? null : homeScore
+        const nextScore2 = isNotStarted ? null : awayScore
+
+        const nextHomeScorers = apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null
+        const nextAwayScorers = apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null
+        const nextStadiumId = apiG.stadium_id ? String(apiG.stadium_id) : null
+
+        if (
+          match.team1 !== nextTeam1 ||
+          match.team2 !== nextTeam2 ||
+          match.score1 !== nextScore1 ||
+          match.score2 !== nextScore2 ||
+          match.homeScorers !== nextHomeScorers ||
+          match.awayScorers !== nextAwayScorers ||
+          match.stadiumId !== nextStadiumId
+        ) {
+          match.team1 = nextTeam1
+          match.team2 = nextTeam2
+          match.score1 = nextScore1
+          match.score2 = nextScore2
+          match.homeScorers = nextHomeScorers
+          match.awayScorers = nextAwayScorers
+          match.stadiumId = nextStadiumId
+          updatedCount++
+        }
+
+        // Populate baseTeams if it is Round of 32
+        const isR32 = parseInt(match.id.slice(1)) <= 16
+        if (isR32 && hEng && aEng && apiG.home_team_id !== '0' && apiG.away_team_id !== '0') {
+          const t1Key = `${match.id}_t1`
+          const t2Key = `${match.id}_t2`
+          if (db.knockout.baseTeams[t1Key] !== nextTeam1) {
+            db.knockout.baseTeams[t1Key] = nextTeam1
+            updatedCount++
+          }
+          if (db.knockout.baseTeams[t2Key] !== nextTeam2) {
+            db.knockout.baseTeams[t2Key] = nextTeam2
+            updatedCount++
+          }
+        }
+
+        // Sync winner
+        if (apiG.finished === 'TRUE' || apiG.time_elapsed === 'finished') {
+          let winnerSlot: number | null = null
+          if (nextScore1 !== null && nextScore2 !== null) {
+            if (nextScore1 > nextScore2) {
+              winnerSlot = 1
+            } else if (nextScore2 > nextScore1) {
+              winnerSlot = 2
+            } else {
+              // Went to penalties: lookup next match to see who advanced
+              const nextGameInApi = apiGames.find((g: any) => 
+                g.home_team_label === `Winner Match ${apiG.id}` || 
+                g.away_team_label === `Winner Match ${apiG.id}`
+              )
+              if (nextGameInApi) {
+                const advancedTeamEng = nextGameInApi.home_team_label === `Winner Match ${apiG.id}` 
+                  ? nextGameInApi.home_team_name_en 
+                  : nextGameInApi.away_team_name_en
+                
+                if (advancedTeamEng) {
+                  if (advancedTeamEng === hEng) {
+                    winnerSlot = 1
+                  } else if (advancedTeamEng === aEng) {
+                    winnerSlot = 2
+                  }
+                }
+              }
+            }
+          }
+
+          if (winnerSlot !== null && db.knockout.winners[match.id] !== winnerSlot) {
+            db.knockout.winners[match.id] = winnerSlot
+            updatedCount++
+          }
+        }
+      }
+    })
+
     if (updatedCount > 0) {
       await writeDb(db)
     }
@@ -303,7 +465,7 @@ app.post('/api/sync-external-scores', async (req, res) => {
   const result = await performSyncExternalScores()
   if (result.success) {
     const db = await readDb()
-    res.json({ success: true, updatedCount: result.updatedCount, matches: db.matches })
+    res.json({ success: true, updatedCount: result.updatedCount, matches: db.matches, knockout: db.knockout })
   } else {
     res.status(502).json({ error: 'Failed to sync scores from external server' })
   }

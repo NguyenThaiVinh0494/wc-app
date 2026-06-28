@@ -7,7 +7,8 @@ import {
   GroupMatch, 
   initialGroups, 
   initialGroupMatches, 
-  initialR32Teams 
+  initialR32Teams,
+  initialKnockoutMatches
 } from './initialData.js' // note the .js extension for ES modules compatibility
 
 const __filename = fileURLToPath(import.meta.url)
@@ -34,6 +35,7 @@ export interface DbState {
   knockout: {
     baseTeams: { [k: string]: string }
     winners: { [k: string]: number | null }
+    matches: GroupMatch[]
   }
 }
 
@@ -52,7 +54,8 @@ export const getDefaultState = (): DbState => ({
   matches: JSON.parse(JSON.stringify(initialGroupMatches)),
   knockout: {
     baseTeams: JSON.parse(JSON.stringify(initialR32Teams)),
-    winners: {}
+    winners: {},
+    matches: JSON.parse(JSON.stringify(initialKnockoutMatches))
   }
 })
 
@@ -63,7 +66,19 @@ function readLocalDb(): DbState {
       initLocalDb()
     }
     const data = fs.readFileSync(DB_FILE, 'utf-8')
-    return JSON.parse(data)
+    const db = JSON.parse(data)
+    let changed = false
+    if (!db.knockout) {
+      db.knockout = { baseTeams: JSON.parse(JSON.stringify(initialR32Teams)), winners: {}, matches: JSON.parse(JSON.stringify(initialKnockoutMatches)) }
+      changed = true
+    } else if (!db.knockout.matches || db.knockout.matches.length === 0) {
+      db.knockout.matches = JSON.parse(JSON.stringify(initialKnockoutMatches))
+      changed = true
+    }
+    if (changed) {
+      writeLocalDb(db)
+    }
+    return db
   } catch (error) {
     console.error('Error reading local database file:', error)
     return getDefaultState()
@@ -104,7 +119,22 @@ export async function readDb(): Promise<DbState> {
       await DbStateModel.findByIdAndUpdate('default_state', defaultState, { upsert: true, new: true })
       return defaultState
     }
-    return doc as unknown as DbState
+    
+    const db = doc as unknown as DbState
+    let changed = false
+    if (!db.knockout) {
+      db.knockout = { baseTeams: JSON.parse(JSON.stringify(initialR32Teams)), winners: {}, matches: JSON.parse(JSON.stringify(initialKnockoutMatches)) }
+      changed = true
+    } else if (!db.knockout.matches || db.knockout.matches.length === 0) {
+      db.knockout.matches = JSON.parse(JSON.stringify(initialKnockoutMatches))
+      changed = true
+    }
+    
+    if (changed) {
+      await writeDb(db)
+    }
+    
+    return db
   } catch (error) {
     console.error('Error reading from MongoDB Atlas, falling back to local file:', error)
     return readLocalDb()

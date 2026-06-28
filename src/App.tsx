@@ -1,647 +1,23 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { Team, GroupMatch } from './types'
+import { 
+  initialGroups, 
+  initialGroupMatches, 
+  initialR32Teams, 
+  initialKnockoutMatches, 
+  BRACKET_FLOW 
+} from './constants'
+import { getQualifiedTeams } from './utils/helpers'
 
-type Team = {
-  name: string
-  played: number
-  won: number
-  drawn: number
-  lost: number
-  gf: number
-  ga: number
-  form: string[]
-}
+// Import components
+import { RoleSelectorModal } from './components/RoleSelectorModal'
+import { MatchModal } from './components/MatchModal'
 
-type GroupMatch = {
-  id: string
-  team1: string
-  team2: string
-  time: string
-  date: string
-  dayOfWeek: string
-  score1: number | null
-  score2: number | null
-  homeScorers?: string | null
-  awayScorers?: string | null
-  stadiumId?: string | null
-}
-
-const createTeam = (name: string): Team => ({
-  name,
-  played: 0,
-  won: 0,
-  drawn: 0,
-  lost: 0,
-  gf: 0,
-  ga: 0,
-  form: []
-})
-
-// Corrected groups based EXACTLY on the user's infographic image
-const initialGroups: Team[][] = [
-  [createTeam('Mexico'), createTeam('Nam Phi'), createTeam('Hàn Quốc'), createTeam('CH Czech')], // A
-  [createTeam('Canada'), createTeam('Bosnia & Herzegovina'), createTeam('Qatar'), createTeam('Thụy Sĩ')], // B
-  [createTeam('Brazil'), createTeam('Morocco'), createTeam('Haiti'), createTeam('Scotland')], // C
-  [createTeam('Mỹ'), createTeam('Paraguay'), createTeam('Australia'), createTeam('Thổ Nhĩ Kỳ')], // D
-  [createTeam('Đức'), createTeam('Curacao'), createTeam('Bờ Biển Ngà'), createTeam('Ecuador')], // E
-  [createTeam('Hà Lan'), createTeam('Nhật Bản'), createTeam('Thụy Điển'), createTeam('Tunisia')], // F
-  [createTeam('Bỉ'), createTeam('Ai Cập'), createTeam('Iran'), createTeam('New Zealand')], // G
-  [createTeam('Tây Ban Nha'), createTeam('Cape Verde'), createTeam('Saudi Arabia'), createTeam('Uruguay')], // H
-  [createTeam('Pháp'), createTeam('Senegal'), createTeam('Iraq'), createTeam('Na Uy')], // I
-  [createTeam('Argentina'), createTeam('Algeria'), createTeam('Áo'), createTeam('Jordan')], // J
-  [createTeam('Bồ Đào Nha'), createTeam('CHDC Congo'), createTeam('Uzbekistan'), createTeam('Colombia')], // K
-  [createTeam('Anh'), createTeam('Croatia'), createTeam('Ghana'), createTeam('Panama')], // L
-]
-
-const TEAMS_INFO: { [name: string]: { flag: string; group: string } } = {
-  'Mexico': { flag: '🇲🇽', group: 'A' },
-  'Nam Phi': { flag: '🇿🇦', group: 'A' },
-  'Hàn Quốc': { flag: '🇰🇷', group: 'A' },
-  'CH Czech': { flag: '🇨🇿', group: 'A' },
-  
-  'Canada': { flag: '🇨🇦', group: 'B' },
-  'Bosnia & Herzegovina': { flag: '🇧🇦', group: 'B' },
-  'Qatar': { flag: '🇶🇦', group: 'B' },
-  'Thụy Sĩ': { flag: '🇨🇭', group: 'B' },
-  
-  'Brazil': { flag: '🇧🇷', group: 'C' },
-  'Morocco': { flag: '🇲🇦', group: 'C' },
-  'Haiti': { flag: '🇭🇹', group: 'C' },
-  'Scotland': { flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', group: 'C' },
-  
-  'Mỹ': { flag: '🇺🇸', group: 'D' },
-  'Paraguay': { flag: '🇵🇾', group: 'D' },
-  'Australia': { flag: '🇦🇺', group: 'D' },
-  'Thổ Nhĩ Kỳ': { flag: '🇹🇷', group: 'D' },
-  
-  'Đức': { flag: '🇩🇪', group: 'E' },
-  'Curacao': { flag: '🇨🇼', group: 'E' },
-  'Bờ Biển Ngà': { flag: '🇨🇮', group: 'E' },
-  'Ecuador': { flag: '🇪🇨', group: 'E' },
-  
-  'Hà Lan': { flag: '🇳🇱', group: 'F' },
-  'Nhật Bản': { flag: '🇯🇵', group: 'F' },
-  'Thụy Điển': { flag: '🇸🇪', group: 'F' },
-  'Tunisia': { flag: '🇹🇳', group: 'F' },
-  
-  'Bỉ': { flag: '🇧🇪', group: 'G' },
-  'Ai Cập': { flag: '🇪🇬', group: 'G' },
-  'Iran': { flag: '🇮🇷', group: 'G' },
-  'New Zealand': { flag: '🇳🇿', group: 'G' },
-  
-  'Tây Ban Nha': { flag: '🇪🇸', group: 'H' },
-  'Cape Verde': { flag: '🇨🇻', group: 'H' },
-  'Saudi Arabia': { flag: '🇸🇦', group: 'H' },
-  'Uruguay': { flag: '🇺🇾', group: 'H' },
-  
-  'Pháp': { flag: '🇫🇷', group: 'I' },
-  'Senegal': { flag: '🇸🇳', group: 'I' },
-  'Iraq': { flag: '🇮🇶', group: 'I' },
-  'Na Uy': { flag: '🇳🇴', group: 'I' },
-  
-  'Argentina': { flag: '🇦🇷', group: 'J' },
-  'Algeria': { flag: '🇩🇿', group: 'J' },
-  'Áo': { flag: '🇦🇹', group: 'J' },
-  'Jordan': { flag: '🇯🇴', group: 'J' },
-  
-  'Bồ Đào Nha': { flag: '🇵🇹', group: 'K' },
-  'CHDC Congo': { flag: '🇨🇩', group: 'K' },
-  'Uzbekistan': { flag: '🇺🇿', group: 'K' },
-  'Colombia': { flag: '🇨🇴', group: 'K' },
-  
-  'Anh': { flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', group: 'L' },
-  'Croatia': { flag: '🇭🇷', group: 'L' },
-  'Ghana': { flag: '🇬🇭', group: 'L' },
-  'Panama': { flag: '🇵🇦', group: 'L' }
-}
-
-const STADIUMS_INFO: { [id: string]: { name: string; city: string; country: string } } = {
-  '1': { name: 'Sân vận động Azteca', city: 'Mexico City', country: 'Mexico' },
-  '2': { name: 'Sân vận động Akron', city: 'Guadalajara', country: 'Mexico' },
-  '3': { name: 'Sân vận động BBVA', city: 'Monterrey', country: 'Mexico' },
-  '4': { name: 'Sân vận động AT&T', city: 'Dallas', country: 'Mỹ' },
-  '5': { name: 'Sân vận động NRG', city: 'Houston', country: 'Mỹ' },
-  '6': { name: 'Sân vận động Arrowhead', city: 'Kansas City', country: 'Mỹ' },
-  '7': { name: 'Sân vận động Mercedes-Benz', city: 'Atlanta', country: 'Mỹ' },
-  '8': { name: 'Sân vận động Hard Rock', city: 'Miami', country: 'Mỹ' },
-  '9': { name: 'Sân vận động Gillette', city: 'Boston', country: 'Mỹ' },
-  '10': { name: 'Sân vận động Lincoln Financial Field', city: 'Philadelphia', country: 'Mỹ' },
-  '11': { name: 'Sân vận động MetLife', city: 'New York/New Jersey', country: 'Mỹ' },
-  '12': { name: 'Sân vận động BMO Field', city: 'Toronto', country: 'Canada' },
-  '13': { name: 'Sân vận động BC Place', city: 'Vancouver', country: 'Canada' },
-  '14': { name: 'Sân vận động Lumen Field', city: 'Seattle', country: 'Mỹ' },
-  '15': { name: 'Sân vận động Levi\'s', city: 'San Francisco Bay Area', country: 'Mỹ' },
-  '16': { name: 'Sân vận động SoFi', city: 'Los Angeles', country: 'Mỹ' }
-}
-
-const getFlagUrl = (teamName: string, emoji: string) => {
-  if (teamName === 'Anh') return 'https://flagcdn.com/w80/gb-eng.png';
-  if (teamName === 'Scotland') return 'https://flagcdn.com/w80/gb-sct.png';
-  if (emoji === '🏳️') return '';
-  try {
-    if (!emoji || emoji.length < 4) return '';
-    const charCode1 = emoji.codePointAt(0);
-    const charCode2 = emoji.codePointAt(2);
-    if (charCode1 && charCode2) {
-      const code1 = String.fromCharCode(charCode1 - 127397);
-      const code2 = String.fromCharCode(charCode2 - 127397);
-      const code = (code1 + code2).toLowerCase();
-      return `https://flagcdn.com/w80/${code}.png`;
-    }
-  } catch (e) {
-    console.error('Error parsing emoji:', emoji, e);
-  }
-  return '';
-}
-
-const renderFlag = (teamName: string, emoji: string, className: string = "w-5 h-3.5 object-cover rounded shadow-sm inline-block") => {
-  const url = getFlagUrl(teamName, emoji);
-  if (url) {
-    return (
-      <img 
-        src={url} 
-        alt={teamName}
-        className={className}
-        onError={(e) => {
-          (e.target as HTMLElement).style.display = 'none';
-        }}
-      />
-    );
-  }
-  return <span className="select-none">{emoji}</span>;
-}
-
-const BracketLines: React.FC<{ winners: { [k: string]: number | null } }> = ({ winners }) => {
-  const [paths, setPaths] = useState<{ d: string; isActive: boolean }[]>([])
-
-  useEffect(() => {
-    const container = document.getElementById('bracket-container')
-    if (!container) return
-
-    const updateLines = () => {
-      const rect = container.getBoundingClientRect()
-      const getBoxEdge = (matchId: string, edge: 'left' | 'right') => {
-        const el = container.querySelector(`[data-match-id="${matchId}"]`)
-        if (!el) return null
-        const elRect = el.getBoundingClientRect()
-        const x = edge === 'left' ? elRect.left - rect.left : elRect.right - rect.left
-        const y = elRect.top - rect.top + elRect.height / 2
-        return { x, y }
-      }
-
-      const flowConnections: { target: string; source: string; side: 'left' | 'right' }[] = [
-        // Col 2 targets (Left side)
-        { target: 'm17', source: 'm2', side: 'right' },
-        { target: 'm17', source: 'm5', side: 'right' },
-        { target: 'm18', source: 'm1', side: 'right' },
-        { target: 'm18', source: 'm3', side: 'right' },
-        { target: 'm19', source: 'm4', side: 'right' },
-        { target: 'm19', source: 'm6', side: 'right' },
-        { target: 'm20', source: 'm7', side: 'right' },
-        { target: 'm20', source: 'm8', side: 'right' },
-
-        // Col 3 targets (Left side)
-        { target: 'm25', source: 'm17', side: 'right' },
-        { target: 'm25', source: 'm18', side: 'right' },
-        { target: 'm26', source: 'm19', side: 'right' },
-        { target: 'm26', source: 'm20', side: 'right' },
-
-        // Col 4 targets (Left side)
-        { target: 'm29', source: 'm25', side: 'right' },
-        { target: 'm29', source: 'm26', side: 'right' },
-
-        // Col 8 targets (Right side)
-        { target: 'm21', source: 'm11', side: 'left' },
-        { target: 'm21', source: 'm12', side: 'left' },
-        { target: 'm22', source: 'm9', side: 'left' },
-        { target: 'm22', source: 'm10', side: 'left' },
-        { target: 'm23', source: 'm14', side: 'left' },
-        { target: 'm23', source: 'm16', side: 'left' },
-        { target: 'm24', source: 'm13', side: 'left' },
-        { target: 'm24', source: 'm15', side: 'left' },
-
-        // Col 7 targets (Right side)
-        { target: 'm27', source: 'm21', side: 'left' },
-        { target: 'm27', source: 'm22', side: 'left' },
-        { target: 'm28', source: 'm23', side: 'left' },
-        { target: 'm28', source: 'm24', side: 'left' },
-
-        // Col 6 targets (Right side)
-        { target: 'm30', source: 'm27', side: 'left' },
-        { target: 'm30', source: 'm28', side: 'left' },
-
-        // Finals target from Col 4 and Col 6 (m32 is center)
-        { target: 'm32', source: 'm29', side: 'right' },
-        { target: 'm32', source: 'm30', side: 'left' },
-        
-        // Third place target
-        { target: 'm31', source: 'm29', side: 'right' },
-        { target: 'm31', source: 'm30', side: 'left' }
-      ]
-
-      const newPaths: { d: string; isActive: boolean }[] = []
-      flowConnections.forEach(({ target, source, side }) => {
-        const start = getBoxEdge(source, side === 'right' ? 'right' : 'left')
-        const end = getBoxEdge(target, side === 'right' ? 'left' : 'right')
-
-        if (start && end) {
-          const isActive = winners[source] !== null && winners[source] !== undefined
-          const xMid = (start.x + end.x) / 2
-          const d = `M ${start.x} ${start.y} L ${xMid} ${start.y} L ${xMid} ${end.y} L ${end.x} ${end.y}`
-          newPaths.push({ d, isActive })
-        }
-      })
-
-      setPaths(newPaths)
-    }
-
-    const timer = setTimeout(updateLines, 150)
-    window.addEventListener('resize', updateLines)
-
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('resize', updateLines)
-    }
-  }, [winners])
-
-  return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
-      {paths.map((p, idx) => (
-        <path
-          key={idx}
-          d={p.d}
-          fill="none"
-          stroke={p.isActive ? '#0f766e' : '#cbd5e1'} /* Darker Teal for active, Slate 300 for inactive */
-          strokeWidth={p.isActive ? 3.5 : 2.0} /* Thicker lines */
-          className="transition-all duration-300"
-        />
-      ))}
-    </svg>
-  )
-}
-
-const initialR32Teams: { [k: string]: string } = {
-  m1_t1: 'Nhì Bảng A', m1_t2: 'Nhì Bảng B',
-  m2_t1: 'Nhất Bảng E', m2_t2: 'Hạng 3 A/B/C/D/F',
-  m3_t1: 'Nhất Bảng F', m3_t2: 'Nhì Bảng C',
-  m4_t1: 'Nhất Bảng C', m4_t2: 'Nhì Bảng F',
-  m5_t1: 'Nhất Bảng I', m5_t2: 'Hạng 3 C/D/F/G/H',
-  m6_t1: 'Nhì Bảng E', m6_t2: 'Nhì Bảng I',
-  m7_t1: 'Nhất Bảng A', m7_t2: 'Hạng 3 C/E/F/H/I',
-  m8_t1: 'Nhất Bảng L', m8_t2: 'Hạng 3 E/H/I/J/K',
-  
-  m9_t1: 'Nhất Bảng D', m9_t2: 'Hạng 3 B/E/F/I/J',
-  m10_t1: 'Nhất Bảng G', m10_t2: 'Hạng 3 A/E/H/I/J',
-  m11_t1: 'Nhì Bảng K', m11_t2: 'Nhì Bảng L',
-  m12_t1: 'Nhất Bảng H', m12_t2: 'Nhì Bảng J',
-  m13_t1: 'Nhất Bảng B', m13_t2: 'Hạng 3 E/F/G/I/J',
-  m14_t1: 'Nhất Bảng J', m14_t2: 'Nhì Bảng H',
-  m15_t1: 'Nhất Bảng K', m15_t2: 'Hạng 3 D/E/I/J/L',
-  m16_t1: 'Nhì Bảng D', m16_t2: 'Nhì Bảng G',
-}
-
-const BRACKET_FLOW: { [k: string]: any } = {
-  m17: { source1: 'm2', source2: 'm5' },
-  m18: { source1: 'm1', source2: 'm3' },
-  m19: { source1: 'm4', source2: 'm6' },
-  m20: { source1: 'm7', source2: 'm8' },
-  m21: { source1: 'm11', source2: 'm12' },
-  m22: { source1: 'm9', source2: 'm10' },
-  m23: { source1: 'm14', source2: 'm16' },
-  m24: { source1: 'm13', source2: 'm15' },
-  
-  m25: { source1: 'm17', source2: 'm18' },
-  m26: { source1: 'm19', source2: 'm20' },
-  m27: { source1: 'm21', source2: 'm22' },
-  m28: { source1: 'm23', source2: 'm24' },
-  
-  m29: { source1: 'm25', source2: 'm26' },
-  m30: { source1: 'm27', source2: 'm28' },
-  
-  m31: { source1: 'm29', source2: 'm30', isLoser: true },
-  m32: { source1: 'm29', source2: 'm30' }
-}
-
-const LAYOUT: { [k: string]: string[] } = {
-  col1: ['m1','m2','m3','m4','m5','m6','m7','m8'],
-  col2: ['m17','m18','m19','m20'],
-  col3: ['m25','m26'],
-  col4: ['m29'],
-  col6: ['m30'],
-  col7: ['m27','m28'],
-  col8: ['m21','m22','m23','m24'],
-  col9: ['m9','m10','m11','m12','m13','m14','m15','m16']
-}
-
-// 72 Matches transcribed directly from the user's image
-const initialGroupMatches: GroupMatch[] = [
-  // Column 1 (Matches 1-16)
-  { id: 'gm1', dayOfWeek: 'Thứ 6', date: '12/6/2026', team1: 'Mexico', team2: 'Nam Phi', time: '2h', score1: null, score2: null },
-  { id: 'gm2', dayOfWeek: 'Thứ 6', date: '12/6/2026', team1: 'Hàn Quốc', team2: 'CH Czech', time: '9h', score1: null, score2: null },
-  { id: 'gm3', dayOfWeek: 'Thứ 7', date: '13/6/2026', team1: 'Canada', team2: 'Bosnia & Herzegovina', time: '2h', score1: null, score2: null },
-  { id: 'gm4', dayOfWeek: 'Thứ 7', date: '13/6/2026', team1: 'Mỹ', team2: 'Paraguay', time: '8h', score1: null, score2: null },
-  { id: 'gm5', dayOfWeek: 'Chủ nhật', date: '14/6/2026', team1: 'Qatar', team2: 'Thụy Sĩ', time: '2h', score1: null, score2: null },
-  { id: 'gm6', dayOfWeek: 'Chủ nhật', date: '14/6/2026', team1: 'Brazil', team2: 'Morocco', time: '5h', score1: null, score2: null },
-  { id: 'gm7', dayOfWeek: 'Chủ nhật', date: '14/6/2026', team1: 'Haiti', team2: 'Scotland', time: '8h', score1: null, score2: null },
-  { id: 'gm8', dayOfWeek: 'Chủ nhật', date: '14/6/2026', team1: 'Australia', team2: 'Thổ Nhĩ Kỳ', time: '11h', score1: null, score2: null },
-  { id: 'gm9', dayOfWeek: 'Thứ 2', date: '15/6/2026', team1: 'Đức', team2: 'Curacao', time: '0h', score1: null, score2: null },
-  { id: 'gm10', dayOfWeek: 'Thứ 2', date: '15/6/2026', team1: 'Hà Lan', team2: 'Nhật Bản', time: '3h', score1: null, score2: null },
-  { id: 'gm11', dayOfWeek: 'Thứ 2', date: '15/6/2026', team1: 'Bờ Biển Ngà', team2: 'Ecuador', time: '6h', score1: null, score2: null },
-  { id: 'gm12', dayOfWeek: 'Thứ 2', date: '15/6/2026', team1: 'Thụy Điển', team2: 'Tunisia', time: '9h', score1: null, score2: null },
-  { id: 'gm13', dayOfWeek: 'Thứ 2', date: '15/6/2026', team1: 'Tây Ban Nha', team2: 'Cape Verde', time: '23h', score1: null, score2: null },
-  { id: 'gm14', dayOfWeek: 'Thứ 3', date: '16/6/2026', team1: 'Bỉ', team2: 'Ai Cập', time: '2h', score1: null, score2: null },
-  { id: 'gm15', dayOfWeek: 'Thứ 3', date: '16/6/2026', team1: 'Saudi Arabia', team2: 'Uruguay', time: '5h', score1: null, score2: null },
-  { id: 'gm16', dayOfWeek: 'Thứ 3', date: '16/6/2026', team1: 'Iran', team2: 'New Zealand', time: '8h', score1: null, score2: null },
-
-  // Column 2 (Matches 17-32)
-  { id: 'gm17', dayOfWeek: 'Thứ 4', date: '17/6/2026', team1: 'Pháp', team2: 'Senegal', time: '2h', score1: null, score2: null },
-  { id: 'gm18', dayOfWeek: 'Thứ 4', date: '17/6/2026', team1: 'Iraq', team2: 'Na Uy', time: '5h', score1: null, score2: null },
-  { id: 'gm19', dayOfWeek: 'Thứ 4', date: '17/6/2026', team1: 'Argentina', team2: 'Algeria', time: '8h', score1: null, score2: null },
-  { id: 'gm20', dayOfWeek: 'Thứ 4', date: '17/6/2026', team1: 'Áo', team2: 'Jordan', time: '11h', score1: null, score2: null },
-  { id: 'gm21', dayOfWeek: 'Thứ 5', date: '18/6/2026', team1: 'Bồ Đào Nha', team2: 'CHDC Congo', time: '0h', score1: null, score2: null },
-  { id: 'gm22', dayOfWeek: 'Thứ 5', date: '18/6/2026', team1: 'Anh', team2: 'Croatia', time: '3h', score1: null, score2: null },
-  { id: 'gm23', dayOfWeek: 'Thứ 5', date: '18/6/2026', team1: 'Ghana', team2: 'Panama', time: '6h', score1: null, score2: null },
-  { id: 'gm24', dayOfWeek: 'Thứ 5', date: '18/6/2026', team1: 'Uzbekistan', team2: 'Colombia', time: '9h', score1: null, score2: null },
-  { id: 'gm25', dayOfWeek: 'Thứ 5', date: '18/6/2026', team1: 'CH Czech', team2: 'Nam Phi', time: '23h', score1: null, score2: null },
-  { id: 'gm26', dayOfWeek: 'Thứ 6', date: '19/6/2026', team1: 'Thụy Sĩ', team2: 'Bosnia & Herzegovina', time: '2h', score1: null, score2: null },
-  { id: 'gm27', dayOfWeek: 'Thứ 6', date: '19/6/2026', team1: 'Canada', team2: 'Qatar', time: '5h', score1: null, score2: null },
-  { id: 'gm28', dayOfWeek: 'Thứ 6', date: '19/6/2026', team1: 'Mexico', team2: 'Hàn Quốc', time: '8h', score1: null, score2: null },
-  { id: 'gm29', dayOfWeek: 'Thứ 7', date: '20/6/2026', team1: 'Mỹ', team2: 'Australia', time: '2h', score1: null, score2: null },
-  { id: 'gm30', dayOfWeek: 'Thứ 7', date: '20/6/2026', team1: 'Scotland', team2: 'Morocco', time: '5h', score1: null, score2: null },
-  { id: 'gm31', dayOfWeek: 'Thứ 7', date: '20/6/2026', team1: 'Brazil', team2: 'Haiti', time: '7h30', score1: null, score2: null },
-  { id: 'gm32', dayOfWeek: 'Thứ 7', date: '20/6/2026', team1: 'Thổ Nhĩ Kỳ', team2: 'Paraguay', time: '10h', score1: null, score2: null },
-
-  // Column 3 (Matches 33-48)
-  { id: 'gm33', dayOfWeek: 'Chủ nhật', date: '21/6/2026', team1: 'Hà Lan', team2: 'Thụy Điển', time: '0h', score1: null, score2: null },
-  { id: 'gm34', dayOfWeek: 'Chủ nhật', date: '21/6/2026', team1: 'Đức', team2: 'Bờ Biển Ngà', time: '3h', score1: null, score2: null },
-  { id: 'gm35', dayOfWeek: 'Chủ nhật', date: '21/6/2026', team1: 'Ecuador', team2: 'Curacao', time: '7h', score1: null, score2: null },
-  { id: 'gm36', dayOfWeek: 'Chủ nhật', date: '21/6/2026', team1: 'Tunisia', team2: 'Nhật Bản', time: '11h', score1: null, score2: null },
-  { id: 'gm37', dayOfWeek: 'Chủ nhật', date: '21/6/2026', team1: 'Tây Ban Nha', team2: 'Saudi Arabia', time: '23h', score1: null, score2: null },
-  { id: 'gm38', dayOfWeek: 'Thứ 2', date: '22/6/2026', team1: 'Bỉ', team2: 'Iran', time: '2h', score1: null, score2: null },
-  { id: 'gm39', dayOfWeek: 'Thứ 2', date: '22/6/2026', team1: 'Uruguay', team2: 'Cape Verde', time: '5h', score1: null, score2: null },
-  { id: 'gm40', dayOfWeek: 'Thứ 2', date: '22/6/2026', team1: 'New Zealand', team2: 'Ai Cập', time: '8h', score1: null, score2: null },
-  { id: 'gm41', dayOfWeek: 'Thứ 3', date: '23/6/2026', team1: 'Argentina', team2: 'Áo', time: '0h', score1: null, score2: null },
-  { id: 'gm42', dayOfWeek: 'Thứ 3', date: '23/6/2026', team1: 'Pháp', team2: 'Iraq', time: '4h', score1: null, score2: null },
-  { id: 'gm43', dayOfWeek: 'Thứ 3', date: '23/6/2026', team1: 'Na Uy', team2: 'Senegal', time: '7h', score1: null, score2: null },
-  { id: 'gm44', dayOfWeek: 'Thứ 3', date: '23/6/2026', team1: 'Jordan', team2: 'Algeria', time: '10h', score1: null, score2: null },
-  { id: 'gm45', dayOfWeek: 'Thứ 4', date: '24/6/2026', team1: 'Bồ Đào Nha', team2: 'Uzbekistan', time: '0h', score1: null, score2: null },
-  { id: 'gm46', dayOfWeek: 'Thứ 4', date: '24/6/2026', team1: 'Anh', team2: 'Ghana', time: '3h', score1: null, score2: null },
-  { id: 'gm47', dayOfWeek: 'Thứ 4', date: '24/6/2026', team1: 'Panama', team2: 'Croatia', time: '6h', score1: null, score2: null },
-  { id: 'gm48', dayOfWeek: 'Thứ 4', date: '24/6/2026', team1: 'Colombia', team2: 'CHDC Congo', time: '9h', score1: null, score2: null },
-
-  // Column 4 (Matches 49-60)
-  { id: 'gm49', dayOfWeek: 'Thứ 5', date: '25/6/2026', team1: 'Thụy Sĩ', team2: 'Canada', time: '2h', score1: null, score2: null },
-  { id: 'gm50', dayOfWeek: 'Thứ 5', date: '25/6/2026', team1: 'Qatar', team2: 'Bosnia & Herzegovina', time: '2h', score1: null, score2: null },
-  { id: 'gm51', dayOfWeek: 'Thứ 5', date: '25/6/2026', team1: 'Morocco', team2: 'Haiti', time: '5h', score1: null, score2: null },
-  { id: 'gm52', dayOfWeek: 'Thứ 5', date: '25/6/2026', team1: 'Scotland', team2: 'Brazil', time: '5h', score1: null, score2: null },
-  { id: 'gm53', dayOfWeek: 'Thứ 5', date: '25/6/2026', team1: 'Nam Phi', team2: 'Hàn Quốc', time: '8h', score1: null, score2: null },
-  { id: 'gm54', dayOfWeek: 'Thứ 5', date: '25/6/2026', team1: 'CH Czech', team2: 'Mexico', time: '8h', score1: null, score2: null },
-  { id: 'gm55', dayOfWeek: 'Thứ 6', date: '26/6/2026', team1: 'Curacao', team2: 'Bờ Biển Ngà', time: '3h', score1: null, score2: null },
-  { id: 'gm56', dayOfWeek: 'Thứ 6', date: '26/6/2026', team1: 'Ecuador', team2: 'Đức', time: '3h', score1: null, score2: null },
-  { id: 'gm57', dayOfWeek: 'Thứ 6', date: '26/6/2026', team1: 'Tunisia', team2: 'Hà Lan', time: '6h', score1: null, score2: null },
-  { id: 'gm58', dayOfWeek: 'Thứ 6', date: '26/6/2026', team1: 'Nhật Bản', team2: 'Thụy Điển', time: '6h', score1: null, score2: null },
-  { id: 'gm59', dayOfWeek: 'Thứ 6', date: '26/6/2026', team1: 'Thổ Nhĩ Kỳ', team2: 'Mỹ', time: '9h', score1: null, score2: null },
-  { id: 'gm60', dayOfWeek: 'Thứ 6', date: '26/6/2026', team1: 'Paraguay', team2: 'Australia', time: '9h', score1: null, score2: null },
-
-  // Column 5 (Matches 61-72)
-  { id: 'gm61', dayOfWeek: 'Thứ 7', date: '27/6/2026', team1: 'Na Uy', team2: 'Pháp', time: '2h', score1: null, score2: null },
-  { id: 'gm62', dayOfWeek: 'Thứ 7', date: '27/6/2026', team1: 'Senegal', team2: 'Iraq', time: '2h', score1: null, score2: null },
-  { id: 'gm63', dayOfWeek: 'Thứ 7', date: '27/6/2026', team1: 'Cape Verde', team2: 'Saudi Arabia', time: '7h', score1: null, score2: null },
-  { id: 'gm64', dayOfWeek: 'Thứ 7', date: '27/6/2026', team1: 'Uruguay', team2: 'Tây Ban Nha', time: '7h', score1: null, score2: null },
-  { id: 'gm65', dayOfWeek: 'Thứ 7', date: '27/6/2026', team1: 'New Zealand', team2: 'Bỉ', time: '10h', score1: null, score2: null },
-  { id: 'gm66', dayOfWeek: 'Thứ 7', date: '27/6/2026', team1: 'Ai Cập', team2: 'Iran', time: '10h', score1: null, score2: null },
-  { id: 'gm67', dayOfWeek: 'Chủ nhật', date: '28/6/2026', team1: 'Panama', team2: 'Anh', time: '4h', score1: null, score2: null },
-  { id: 'gm68', dayOfWeek: 'Chủ nhật', date: '28/6/2026', team1: 'Croatia', team2: 'Ghana', time: '4h', score1: null, score2: null },
-  { id: 'gm69', dayOfWeek: 'Chủ nhật', date: '28/6/2026', team1: 'Colombia', team2: 'Bồ Đào Nha', time: '6h30', score1: null, score2: null },
-  { id: 'gm70', dayOfWeek: 'Chủ nhật', date: '28/6/2026', team1: 'CHDC Congo', team2: 'Uzbekistan', time: '6h30', score1: null, score2: null },
-  { id: 'gm71', dayOfWeek: 'Chủ nhật', date: '28/6/2026', team1: 'Algeria', team2: 'Áo', time: '9h', score1: null, score2: null },
-  { id: 'gm72', dayOfWeek: 'Chủ nhật', date: '28/6/2026', team1: 'Jordan', team2: 'Argentina', time: '9h', score1: null, score2: null }
-]
-
-const getGroupColor = (groupLetter: string) => {
-  const colorMap: { [key: string]: { border: string; bg: string; text: string } } = {
-    'A': { border: 'border-emerald-200 hover:border-emerald-400', bg: 'bg-emerald-50/70 hover:bg-emerald-100/90', text: 'text-emerald-900' },
-    'B': { border: 'border-blue-200 hover:border-blue-400', bg: 'bg-blue-50/70 hover:bg-blue-100/90', text: 'text-blue-900' },
-    'C': { border: 'border-cyan-200 hover:border-cyan-400', bg: 'bg-cyan-50/70 hover:bg-cyan-100/90', text: 'text-cyan-900' },
-    'D': { border: 'border-amber-200 hover:border-amber-400', bg: 'bg-amber-50/70 hover:bg-amber-100/90', text: 'text-amber-900' },
-    'E': { border: 'border-violet-200 hover:border-violet-400', bg: 'bg-violet-50/70 hover:bg-violet-100/90', text: 'text-violet-900' },
-    'F': { border: 'border-pink-200 hover:border-pink-400', bg: 'bg-pink-50/70 hover:bg-pink-100/90', text: 'text-pink-900' },
-    'G': { border: 'border-rose-200 hover:border-rose-400', bg: 'bg-rose-50/70 hover:bg-rose-100/90', text: 'text-rose-900' },
-    'H': { border: 'border-sky-200 hover:border-sky-400', bg: 'bg-sky-50/70 hover:bg-sky-100/90', text: 'text-sky-900' },
-    'I': { border: 'border-indigo-200 hover:border-indigo-400', bg: 'bg-indigo-50/70 hover:bg-indigo-100/90', text: 'text-indigo-900' },
-    'J': { border: 'border-teal-200 hover:border-teal-400', bg: 'bg-teal-50/70 hover:bg-teal-100/90', text: 'text-teal-900' },
-    'K': { border: 'border-lime-200 hover:border-lime-400', bg: 'bg-lime-50/70 hover:bg-lime-100/90', text: 'text-lime-900' },
-    'L': { border: 'border-fuchsia-200 hover:border-fuchsia-400', bg: 'bg-fuchsia-50/70 hover:bg-fuchsia-100/90', text: 'text-fuchsia-900' }
-  }
-  return colorMap[groupLetter] || { border: 'border-slate-200 hover:border-slate-400', bg: 'bg-slate-50 hover:bg-slate-100', text: 'text-slate-800' }
-}
-
-interface GroupedMatches {
-  dateKey: string
-  dayOfWeek: string
-  date: string
-  matches: GroupMatch[]
-}
-
-const getGroupedMatchesForColumn = (matches: GroupMatch[]): GroupedMatches[] => {
-  const groups: GroupedMatches[] = []
-  matches.forEach(m => {
-    const key = `${m.dayOfWeek} - Ngày ${m.date}`
-    let group = groups.find(g => g.dateKey === key)
-    if (!group) {
-      group = { dateKey: key, dayOfWeek: m.dayOfWeek, date: m.date, matches: [] }
-      groups.push(group)
-    }
-    group.matches.push(m)
-  })
-  return groups
-}
-
-const getQualifiedTeams = (groupsData: Team[][]) => {
-  const firsts: string[] = []
-  const seconds: string[] = []
-  const thirds: { name: string; pts: number; gd: number; gf: number; groupLetter: string }[] = []
-  
-  groupsData.forEach((group, idx) => {
-    const letter = String.fromCharCode(65 + idx)
-    if (group[0]) firsts.push(group[0].name)
-    if (group[1]) seconds.push(group[1].name)
-    if (group[2]) {
-      const t = group[2]
-      thirds.push({
-        name: t.name,
-        pts: t.won * 3 + t.drawn,
-        gd: t.gf - t.ga,
-        gf: t.gf,
-        groupLetter: letter
-      })
-    }
-  })
-  
-  thirds.sort((a, b) => {
-    if (a.pts !== b.pts) return b.pts - a.pts
-    if (a.gd !== b.gd) return b.gd - a.gd
-    return b.gf - a.gf
-  })
-  
-  return {
-    firsts,
-    seconds,
-    thirds: thirds.slice(0, 8)
-  }
-}
-
-// Landing Page Component
-const LandingPage: React.FC<{ setActiveTab: (tab: 'landing' | 'standings' | 'fixtures' | 'knockout') => void }> = ({ setActiveTab }) => {
-  return (
-    <div className="max-w-5xl mx-auto py-8 px-4 flex flex-col gap-12 text-white animate-slide-up">
-      {/* Hero Banner */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#1e2354] via-[#12132b] to-[#251b4f] p-8 md:p-12 border border-white/10 shadow-2xl flex flex-col items-center text-center gap-6 animate-powerpoint-hero">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.15),transparent_60%)]"></div>
-        
-        <div className="relative px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-black tracking-widest uppercase animate-pulse">
-          🏆 Giải đấu đang diễn ra (11/06 - 19/07/2026)
-        </div>
-
-        <h1 className="relative text-4xl md:text-6xl font-black tracking-tight leading-none text-gradient-animate drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-          FIFA WORLD CUP 2026
-        </h1>
-
-        <p className="relative text-base md:text-xl font-bold tracking-widest text-yellow-400 uppercase">
-          UNITED: HOA KỲ • CANADA • MEXICO
-        </p>
-
-        <p className="relative max-w-2xl text-xs md:text-sm text-gray-400 leading-relaxed font-medium">
-          Lần đầu tiên trong lịch sử, ngày hội bóng đá lớn nhất hành tinh được tổ chức tại 3 quốc gia đồng chủ nhà với sự tham gia của 48 đội tuyển xuất sắc nhất, mang lại tổng cộng 104 trận cầu rực lửa.
-        </p>
-
-        {/* Host Countries Flags */}
-        <div className="relative flex justify-center gap-6 md:gap-10 mt-4">
-          <div className="flex flex-col items-center gap-1.5 transition-transform hover:scale-110">
-            {renderFlag('Mỹ', '🇺🇸', 'w-12 h-8 object-cover rounded shadow-md')}
-            <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Hoa Kỳ</span>
-          </div>
-          <div className="flex flex-col items-center gap-1.5 transition-transform hover:scale-110">
-            {renderFlag('Canada', '🇨🇦', 'w-12 h-8 object-cover rounded shadow-md')}
-            <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Canada</span>
-          </div>
-          <div className="flex flex-col items-center gap-1.5 transition-transform hover:scale-110">
-            {renderFlag('Mexico', '🇲🇽', 'w-12 h-8 object-cover rounded shadow-md')}
-            <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Mexico</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Đội tuyển', val: '48', desc: '12 bảng đấu', color: 'from-teal-400 to-emerald-500' },
-          { label: 'Trận đấu', val: '104', desc: 'Kịch tính từng giây', color: 'from-blue-400 to-indigo-500' },
-          { label: 'Chủ nhà', val: '3', desc: 'Mỹ, Canada, Mexico', color: 'from-yellow-400 to-orange-500' },
-          { label: 'Ngày hội', val: '39', desc: 'Ngày tranh tài rực lửa', color: 'from-pink-400 to-rose-500' },
-        ].map((stat, idx) => (
-          <div key={idx} className={`glass-card rounded-2xl p-5 flex flex-col items-center text-center animate-stagger delay-${(idx + 1) * 100}`}>
-            <span className={`text-3xl md:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r ${stat.color}`}>{stat.val}</span>
-            <span className="text-xs font-bold text-white uppercase tracking-wider mt-1">{stat.label}</span>
-            <span className="text-[10px] text-gray-400 font-medium mt-0.5">{stat.desc}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Quick Shortcut CTAs */}
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-extrabold uppercase border-l-4 border-teal-400 pl-3">Khám phá Tiện ích</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              title: 'Bảng Xếp Hạng',
-              desc: 'Xem thứ hạng, điểm số, hiệu số bàn thắng bại và phong độ của 48 đội bóng tại 12 bảng đấu.',
-              tab: 'standings',
-              icon: '📊',
-              btnClass: 'bg-teal-500 hover:bg-teal-400 text-black',
-              borderClass: 'border-teal-500/20 hover:border-teal-500/40'
-            },
-            {
-              title: 'Kết Quả Thi Đấu',
-              desc: 'Theo dõi chi tiết 72 trận đấu vòng bảng, ghi nhận tỉ số trực tiếp để tự động cập nhật bảng điểm.',
-              tab: 'fixtures',
-              icon: '⚽',
-              btnClass: 'bg-green-500 hover:bg-green-400 text-black',
-              borderClass: 'border-green-500/20 hover:border-green-500/40'
-            },
-            {
-              title: 'Vòng Knockout',
-              desc: 'Trải nghiệm vòng đấu loại trực tiếp kịch tính từ Vòng 1/16, Tứ kết, Bán kết đến ngôi vương vô địch.',
-              tab: 'knockout',
-              icon: '🏆',
-              btnClass: 'bg-blue-500 hover:bg-blue-400 text-white',
-              borderClass: 'border-blue-500/20 hover:border-blue-500/40'
-            }
-          ].map((card, idx) => (
-            <div 
-              key={idx} 
-              className="glass-card rounded-2xl p-6 flex flex-col gap-4"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl select-none">{card.icon}</span>
-                <h3 className="font-extrabold text-base tracking-tight uppercase text-white">{card.title}</h3>
-              </div>
-              <p className="text-xs text-gray-400 font-medium leading-relaxed flex-1">{card.desc}</p>
-              <button 
-                onClick={() => setActiveTab(card.tab as any)}
-                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 shadow-md ${card.btnClass}`}
-              >
-                Truy cập ngay
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Mascots Detail */}
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-extrabold uppercase border-l-4 border-yellow-400 pl-3">Linh vật chính thức (Official Mascots)</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { name: 'Tuần Lộc (Deer)', country: 'Canada', flag: '🇨🇦', desc: 'Đại diện cho sự nhanh nhẹn, bền bỉ kiên cường trước nghịch cảnh, mang đậm nét đặc trưng hoang dã của thiên nhiên Canada rộng lớn.', icon: '🦌', color: 'from-red-500/10 to-transparent border-red-500/20' },
-            { name: 'Báo Hoa Mai (Leopard)', country: 'Mexico', flag: '🇲🇽', desc: 'Đại diện cho tốc độ xé gió, sự dũng mãnh huyền thoại và di sản văn hóa Maya/Aztec đầy huyền bí, rực rỡ sắc màu của đất nước Mexico.', icon: '🐆', color: 'from-green-500/10 to-transparent border-green-500/20' },
-            { name: 'Đại Bàng (Eagle)', country: 'Mỹ', flag: '🇺🇸', desc: 'Đại diện cho tầm nhìn cao rộng kiêu hãnh, ý chí tự do phóng khoáng và sức mạnh khát vọng dẫn đầu của tinh thần thể thao nước Mỹ.', icon: '🦅', color: 'from-blue-500/10 to-transparent border-blue-500/20' }
-          ].map((m, idx) => (
-            <div key={idx} className={`glass-card bg-gradient-to-b ${m.color} rounded-2xl p-6 flex flex-col items-center text-center gap-3 animate-stagger delay-${(idx + 5) * 100}`}>
-              <span className="text-5xl animate-pulse select-none">{m.icon}</span>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm uppercase tracking-wide text-slate-800">{m.name}</span>
-                {renderFlag(m.country, m.flag, "w-5 h-3.5 object-cover rounded shadow-sm shrink-0")}
-              </div>
-              <p className="text-[11px] text-gray-400 font-medium leading-relaxed">{m.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Stadiums / Host Cities */}
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-extrabold uppercase border-l-4 border-blue-400 pl-3">Thành phố đăng cai nổi bật</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { city: 'New York/New Jersey', stadium: 'Sân vận động MetLife', capacity: '82,500 chỗ ngồi', note: 'Nơi diễn ra trận Chung Kết lịch sử', icon: '🗽' },
-            { city: 'Mexico City', stadium: 'Sân vận động Azteca', capacity: '87,523 chỗ ngồi', note: 'Sân đầu tiên đăng cai 3 kỳ World Cup', icon: '🏟️' },
-            { city: 'Toronto', stadium: 'Sân vận động BMO Field', capacity: '45,000 chỗ ngồi', note: 'Trọng điểm bóng đá quốc gia lá phong', icon: '🍁' }
-          ].map((stadium, idx) => (
-            <div key={idx} className={`glass-card rounded-2xl p-5 flex flex-col gap-2 animate-stagger delay-${(idx + 8) * 100}`}>
-              <div className="flex items-center justify-between">
-                <span className="font-extrabold text-xs text-white uppercase tracking-wider">{stadium.city}</span>
-                <span className="text-xl select-none">{stadium.icon}</span>
-              </div>
-              <div className="text-sm font-black text-yellow-400">{stadium.stadium}</div>
-              <div className="text-[10px] text-gray-400 font-bold">{stadium.capacity}</div>
-              <div className="text-[10px] text-teal-400 font-medium mt-1 italic">{stadium.note}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
+// Import tabs
+import { LandingPage } from './tabs/LandingPage'
+import { StandingsPage } from './tabs/StandingsPage'
+import { FixturesPage } from './tabs/FixturesPage'
+import { KnockoutPage } from './tabs/KnockoutPage'
 
 export default function App(): JSX.Element {
   const [role, setRole] = useState<'admin' | 'guest' | null>(() => {
@@ -673,118 +49,6 @@ export default function App(): JSX.Element {
     setRole(selectedRole)
   }
 
-  // Role selector component
-  const RoleSelectorModal = () => {
-    const [pin, setPin] = useState('')
-    const [errorMsg, setErrorMsg] = useState('')
-    const [showPinInput, setShowPinInput] = useState(false)
-    const [isVerifying, setIsVerifying] = useState(false)
-
-    const handleVerifyPin = (e: React.FormEvent) => {
-      e.preventDefault()
-      setErrorMsg('')
-      setIsVerifying(true)
-      
-      fetch('/api/login-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pin })
-      })
-      .then(async res => {
-        setIsVerifying(false)
-        if (res.ok) {
-          handleSelectRole('admin')
-        } else {
-          const data = await res.json()
-          setErrorMsg(data.error || 'Sai mã PIN xác minh Admin!')
-        }
-      })
-      .catch(err => {
-        setIsVerifying(false)
-        console.error(err)
-        setErrorMsg('Không thể kết nối tới server!')
-      })
-    }
-
-    return (
-      <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-        <div className="glass-card w-full max-w-md rounded-3xl p-8 border border-white/10 shadow-2xl flex flex-col gap-6 text-center text-white relative overflow-hidden animate-slide-up">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.1),transparent_60%)] pointer-events-none"></div>
-          
-          <div className="text-5xl select-none animate-bounce">🏆</div>
-          <div className="flex flex-col">
-            <h2 className="text-xl md:text-2xl font-black text-gradient-animate uppercase">World Cup 2026</h2>
-            <span className="text-[10px] text-yellow-400 font-extrabold uppercase tracking-widest mt-1">Hệ Thống Quản Lý & Cập Nhật Tỉ Số</span>
-          </div>
-
-          {!showPinInput ? (
-            <div className="flex flex-col gap-4 mt-2 z-10">
-              <p className="text-xs text-gray-400 font-medium px-4 leading-relaxed">
-                Chào mừng bạn! Vui lòng chọn chế độ truy cập. Quyền truy cập sẽ được lưu trong vòng 2 tiếng.
-              </p>
-              
-              <button
-                onClick={() => handleSelectRole('guest')}
-                className="w-full py-3 bg-gradient-to-r from-teal-500/20 to-blue-500/20 border border-teal-500/30 hover:border-teal-400 text-teal-300 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-lg shadow-teal-500/5 cursor-pointer"
-              >
-                👀 Khách xem (View-Only)
-              </button>
-
-              <button
-                onClick={() => setShowPinInput(true)}
-                className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-md shadow-blue-500/20 cursor-pointer"
-              >
-                🔐 Administrator (Cập nhật dữ liệu)
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleVerifyPin} className="flex flex-col gap-4 mt-2 z-10">
-              <p className="text-xs text-gray-400 font-semibold">
-                Nhập mã PIN Admin để truy cập quyền quản trị:
-              </p>
-              
-              <input
-                type="password"
-                placeholder="Nhập mã PIN Admin..."
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                className="w-full h-12 bg-black/40 border border-gray-700 rounded-xl text-center text-base font-bold text-white outline-none focus:border-blue-500 transition-colors"
-                autoFocus
-              />
-
-              {errorMsg && (
-                <div className="text-xs font-bold text-red-400 bg-red-950/20 border border-red-500/20 py-2 rounded-lg">
-                  ❌ {errorMsg}
-                </div>
-              )}
-
-              <div className="flex gap-2.5 mt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPinInput(false)
-                    setErrorMsg('')
-                    setPin('')
-                  }}
-                  className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
-                >
-                  Quay lại
-                </button>
-                <button
-                  type="submit"
-                  disabled={isVerifying}
-                  className="flex-1 py-3 bg-green-500 hover:bg-green-400 text-black rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-md cursor-pointer disabled:opacity-50"
-                >
-                  {isVerifying ? 'Đang xác minh...' : 'Xác nhận'}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </div>
-    )
-  }
-
   const [groupNames, setGroupNames] = useState<string[][]>(() => {
     const saved = localStorage.getItem('wc2026_groupNames')
     return saved ? JSON.parse(saved) : initialGroups.map(g => g.map(t => t.name))
@@ -801,6 +65,11 @@ export default function App(): JSX.Element {
     const saved = localStorage.getItem('wc2026_winners')
     return saved ? JSON.parse(saved) : {}
   })
+  const [knockoutMatches, setKnockoutMatches] = useState<GroupMatch[]>(() => {
+    const saved = localStorage.getItem('wc2026_knockoutMatches')
+    return saved ? JSON.parse(saved) : initialKnockoutMatches
+  })
+  const [knockoutTab, setKnockoutTab] = useState<'bracket' | 'results'>('bracket')
   const [editingMatch, setEditingMatch] = useState<GroupMatch | null>(null)
   
   const [modalScore1, setModalScore1] = useState<string>('')
@@ -817,7 +86,8 @@ export default function App(): JSX.Element {
     currentGroups: string[][],
     currentMatches: GroupMatch[],
     currentBaseTeams: { [k: string]: string },
-    currentWinners: { [k: string]: number | null }
+    currentWinners: { [k: string]: number | null },
+    currentKnockoutMatches: GroupMatch[]
   ) => {
     fetch('/api/sync', {
       method: 'POST',
@@ -827,7 +97,8 @@ export default function App(): JSX.Element {
         matches: currentMatches,
         knockout: {
           baseTeams: currentBaseTeams,
-          winners: currentWinners
+          winners: currentWinners,
+          matches: currentKnockoutMatches
         }
       })
     })
@@ -845,15 +116,17 @@ export default function App(): JSX.Element {
       .then(data => {
         const hasBackendScores = data.matches && data.matches.some((m: any) => m.score1 !== null || m.score2 !== null)
         const hasBackendWinners = data.knockout && data.knockout.winners && Object.keys(data.knockout.winners).length > 0
+        const hasBackendKOMatches = data.knockout && data.knockout.matches && data.knockout.matches.some((m: any) => m.score1 !== null || m.score2 !== null)
         
         const localGroupsStr = localStorage.getItem('wc2026_groupNames')
         const localMatchesStr = localStorage.getItem('wc2026_groupMatches')
         const localBaseTeamsStr = localStorage.getItem('wc2026_baseTeams')
         const localWinnersStr = localStorage.getItem('wc2026_winners')
+        const localKnockoutMatchesStr = localStorage.getItem('wc2026_knockoutMatches')
 
-        const isLocalEmpty = !localMatchesStr && !localWinnersStr
+        const isLocalEmpty = !localMatchesStr && !localWinnersStr && !localKnockoutMatchesStr
 
-        if (hasBackendScores || hasBackendWinners || isLocalEmpty) {
+        if (hasBackendScores || hasBackendWinners || hasBackendKOMatches || isLocalEmpty) {
           if (data.groups) {
             const names = data.groups.map((g: any) => g.map((t: any) => t.name))
             setGroupNames(names)
@@ -872,6 +145,10 @@ export default function App(): JSX.Element {
               setWinners(data.knockout.winners)
               localStorage.setItem('wc2026_winners', JSON.stringify(data.knockout.winners))
             }
+            if (data.knockout.matches) {
+              setKnockoutMatches(data.knockout.matches)
+              localStorage.setItem('wc2026_knockoutMatches', JSON.stringify(data.knockout.matches))
+            }
           }
         } else {
           // Server is empty but LocalStorage has data (Render cold start)
@@ -879,9 +156,10 @@ export default function App(): JSX.Element {
           const localMatches = localMatchesStr ? JSON.parse(localMatchesStr) : groupMatches
           const localBaseTeams = localBaseTeamsStr ? JSON.parse(localBaseTeamsStr) : baseTeams
           const localWinners = localWinnersStr ? JSON.parse(localWinnersStr) : winners
+          const localKnockoutMatches = localKnockoutMatchesStr ? JSON.parse(localKnockoutMatchesStr) : knockoutMatches
           
           console.log('Syncing local storage data back to restarted server...')
-          syncLocalStateToBackend(localGroups, localMatches, localBaseTeams, localWinners)
+          syncLocalStateToBackend(localGroups, localMatches, localBaseTeams, localWinners, localKnockoutMatches)
         }
       })
       .catch(err => console.error('Error fetching state from API:', err))
@@ -890,7 +168,6 @@ export default function App(): JSX.Element {
   // Background polling from own server (every 2 minutes)
   useEffect(() => {
     const refreshState = () => {
-      // Avoid overwriting state if user is editing or has text input focused
       const isInputFocused = document.activeElement?.tagName === 'INPUT'
       if (editingMatch || isInputFocused) return
 
@@ -931,6 +208,14 @@ export default function App(): JSX.Element {
                 localStorage.setItem('wc2026_winners', nextWinnersStr)
               }
             }
+            if (data.knockout.matches) {
+              const currentKOMatchesStr = JSON.stringify(knockoutMatches)
+              const nextKOMatchesStr = JSON.stringify(data.knockout.matches)
+              if (currentKOMatchesStr !== nextKOMatchesStr) {
+                setKnockoutMatches(data.knockout.matches)
+                localStorage.setItem('wc2026_knockoutMatches', nextKOMatchesStr)
+              }
+            }
           }
         })
         .catch(err => console.log('Error auto-refreshing state:', err))
@@ -938,7 +223,7 @@ export default function App(): JSX.Element {
 
     const intervalId = setInterval(refreshState, 120000) // 2 minutes
     return () => clearInterval(intervalId)
-  }, [groupNames, groupMatches, baseTeams, winners, editingMatch])
+  }, [groupNames, groupMatches, baseTeams, winners, knockoutMatches, editingMatch])
 
   const handlePersistGroups = (newNames: string[][]) => {
     localStorage.setItem('wc2026_groupNames', JSON.stringify(newNames))
@@ -972,11 +257,15 @@ export default function App(): JSX.Element {
           setGroupMatches(state.matches)
           setBaseTeams(state.knockout.baseTeams)
           setWinners(state.knockout.winners)
+          if (state.knockout.matches) {
+            setKnockoutMatches(state.knockout.matches)
+          }
 
           localStorage.removeItem('wc2026_groupNames')
           localStorage.removeItem('wc2026_groupMatches')
           localStorage.removeItem('wc2026_baseTeams')
           localStorage.removeItem('wc2026_winners')
+          localStorage.removeItem('wc2026_knockoutMatches')
           
           alert('Đã khôi phục dữ liệu về trạng thái mặc định ban đầu!')
         }
@@ -994,7 +283,21 @@ export default function App(): JSX.Element {
           if (data.updatedCount > 0) {
             setGroupMatches(data.matches)
             localStorage.setItem('wc2026_groupMatches', JSON.stringify(data.matches))
-            alert(`Đã cập nhật tự động thành công tỉ số của ${data.updatedCount} trận đấu từ FIFA!`)
+            if (data.knockout) {
+              if (data.knockout.baseTeams) {
+                setBaseTeams(data.knockout.baseTeams)
+                localStorage.setItem('wc2026_baseTeams', JSON.stringify(data.knockout.baseTeams))
+              }
+              if (data.knockout.winners) {
+                setWinners(data.knockout.winners)
+                localStorage.setItem('wc2026_winners', JSON.stringify(data.knockout.winners))
+              }
+              if (data.knockout.matches) {
+                setKnockoutMatches(data.knockout.matches)
+                localStorage.setItem('wc2026_knockoutMatches', JSON.stringify(data.knockout.matches))
+              }
+            }
+            alert(`Đã cập nhật tự động thành công tỉ số và các đội đi tiếp của ${data.updatedCount} trận đấu từ FIFA!`)
           } else {
             alert('Tỉ số các trận đấu hiện tại đã là mới nhất!')
           }
@@ -1131,16 +434,50 @@ export default function App(): JSX.Element {
   }
 
   const handleSaveScore = (matchId: string, s1: number | null, s2: number | null) => {
-    setGroupMatches(prev => {
-      const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2 } : m)
-      localStorage.setItem('wc2026_groupMatches', JSON.stringify(next))
-      return next
-    })
+    if (matchId.startsWith('gm')) {
+      setGroupMatches(prev => {
+        const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2 } : m)
+        localStorage.setItem('wc2026_groupMatches', JSON.stringify(next))
+        return next
+      })
+    } else {
+      setKnockoutMatches(prev => {
+        const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2 } : m)
+        localStorage.setItem('wc2026_knockoutMatches', JSON.stringify(next))
+        return next
+      })
+      
+      if (s1 !== null && s2 !== null) {
+        setWinners(prev => {
+          let nextVal = prev[matchId]
+          if (s1 > s2) nextVal = 1
+          else if (s2 > s1) nextVal = 2
+          const next = { ...prev, [matchId]: nextVal }
+          localStorage.setItem('wc2026_winners', JSON.stringify(next))
+          return next
+        })
+      } else {
+        setWinners(prev => {
+          const next = { ...prev, [matchId]: null }
+          localStorage.setItem('wc2026_winners', JSON.stringify(next))
+          return next
+        })
+      }
+    }
     
     fetch(`/api/matches/${matchId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ score1: s1, score2: s2 })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.knockout) {
+        if (data.knockout.winners) {
+          setWinners(data.knockout.winners)
+          localStorage.setItem('wc2026_winners', JSON.stringify(data.knockout.winners))
+        }
+      }
     })
     .catch(err => console.error('Error saving match score:', err))
   }
@@ -1197,122 +534,6 @@ export default function App(): JSX.Element {
       return getTeamForMatch(sourceMatchId, loserVal)
     }
     return getTeamForMatch(sourceMatchId, winnerVal)
-  }
-
-  const getMatchColor = (matchId: string) => {
-    const idNum = parseInt(matchId.slice(1))
-    if (idNum <= 16) return 'border-teal-200 bg-teal-50/70 text-teal-900'
-    if (idNum <= 24) return 'border-blue-200 bg-blue-50/70 text-blue-900'
-    if (idNum <= 28) return 'border-fuchsia-200 bg-fuchsia-50/70 text-fuchsia-900'
-    if (idNum <= 30) return 'border-amber-200 bg-amber-50/70 text-amber-900'
-    if (idNum === 31) return 'border-slate-300 bg-slate-100/70 text-slate-800'
-    return 'border-red-300 bg-red-50/80 text-red-950'
-  }
-
-  const getMatchTitle = (matchId: string) => {
-    const idNum = parseInt(matchId.slice(1))
-    if (idNum <= 16) return 'Vòng 1/16'
-    if (idNum <= 24) return 'Vòng 1/8'
-    if (idNum <= 28) return 'Tứ kết'
-    if (idNum <= 30) return 'Bán kết'
-    if (idNum === 31) return 'Tranh Hạng 3'
-    return 'Chung Kết'
-  }
-
-  const MatchBox: React.FC<{ matchId: string }> = ({ matchId }) => {
-    const t1 = getTeamForMatch(matchId, 1)
-    const t2 = getTeamForMatch(matchId, 2)
-    const winner = winners[matchId]
-    const isR32 = parseInt(matchId.slice(1)) <= 16
-    const colorClass = getMatchColor(matchId)
-    const title = getMatchTitle(matchId)
-    const isAdmin = role === 'admin'
-
-    return (
-      <div data-match-id={matchId} className={`w-36 rounded overflow-hidden border ${colorClass} shadow-lg text-xs transition-all duration-300 hover:scale-105`}>
-        <div className="text-center font-bold text-[10px] py-1 bg-black/5 uppercase tracking-wider border-b border-inherit">{title}</div>
-
-        <div 
-          onClick={() => isAdmin && handleWinnerSelect(matchId, 1)} 
-          className={`px-2 py-2 flex items-center border-b border-black/5 transition-colors ${winner === 1 ? 'bg-green-600 font-bold text-white' : 'text-slate-700'} ${winner === 2 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-black/5' : ''}`}
-        >
-          {isR32 && isAdmin ? (
-            <input value={t1} onChange={(e) => handleBaseTeamChange(matchId, 1, e.target.value)} onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} onClick={(e) => e.stopPropagation()} className="bg-transparent w-full outline-none focus:bg-black/5 px-1 rounded text-slate-800 placeholder-slate-400" placeholder="Đội..." />
-          ) : (
-            <span className="truncate w-full block">{t1 || '-'}</span>
-          )}
-        </div>
-
-        <div 
-          onClick={() => isAdmin && handleWinnerSelect(matchId, 2)} 
-          className={`px-2 py-2 flex items-center transition-colors ${winner === 2 ? 'bg-green-600 font-bold text-white' : 'text-slate-700'} ${winner === 1 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-black/5' : ''}`}
-        >
-          {isR32 && isAdmin ? (
-            <input value={t2} onChange={(e) => handleBaseTeamChange(matchId, 2, e.target.value)} onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} onClick={(e) => e.stopPropagation()} className="bg-transparent w-full outline-none focus:bg-black/5 px-1 rounded text-slate-800 placeholder-slate-400" placeholder="Đội..." />
-          ) : (
-            <span className="truncate w-full block">{t2 || '-'}</span>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  const renderColumn = (matchesSlice: GroupMatch[], hasMascots: boolean = false) => {
-    const grouped = getGroupedMatchesForColumn(matchesSlice)
-    return (
-      <div className="flex flex-col gap-5 min-w-[240px] flex-1">
-        {grouped.map(group => (
-          <div key={group.dateKey} className="flex flex-col gap-2.5">
-            <div className="bg-[#137a3e] text-[#f8e025] font-black text-center py-1.5 rounded-md text-xs uppercase tracking-wider shadow-md border border-[#1b8c4a]">
-              {group.dayOfWeek} - Ngày {group.date}
-            </div>
-            <div className="flex flex-col gap-2">
-              {group.matches.map(match => {
-                const t1Info = TEAMS_INFO[match.team1] || { flag: '🏳️', group: 'A' }
-                const t2Info = TEAMS_INFO[match.team2] || { flag: '🏳️', group: 'A' }
-                const colorInfo = getGroupColor(t1Info.group)
-                const hasScore = match.score1 !== null && match.score2 !== null
-
-                return (
-                  <div
-                    key={match.id}
-                    onClick={() => setEditingMatch(match)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-full border ${colorInfo.bg} ${colorInfo.border} shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.03] text-xs font-bold ${colorInfo.text}`}
-                  >
-                    <div className="flex items-center gap-1.5 w-[42%] justify-end text-right">
-                      <span className="truncate uppercase text-[10px] tracking-tight" title={match.team1}>
-                        {match.team1}
-                      </span>
-                      {renderFlag(match.team1, t1Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
-                    </div>
-
-                    <div className="w-8 h-8 rounded-full bg-white text-black font-black flex items-center justify-center text-[10px] shadow-md shrink-0 mx-1 select-none">
-                      {hasScore ? `${match.score1}-${match.score2}` : match.time}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 w-[42%] justify-start text-left">
-                      {renderFlag(match.team2, t2Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
-                      <span className="truncate uppercase text-[10px] tracking-tight" title={match.team2}>
-                        {match.team2}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-
-        {hasMascots && (
-          <div className="bg-[#1e1e38]/50 border border-white/5 rounded-xl p-4 flex flex-col items-center justify-center gap-3 text-center shadow-lg mt-auto bg-gradient-to-br from-[#12132b] via-[#1e2354]/40 to-[#12132b]">
-            <div className="text-4xl animate-bounce select-none">🦌 🐆 🦅</div>
-            <div className="text-[10px] tracking-widest text-gray-400 font-bold uppercase">Mascots chính thức</div>
-            <div className="text-xs text-yellow-400 font-extrabold">UNITED 2026</div>
-            <div className="text-[9px] text-gray-500 font-semibold border-t border-white/5 pt-2 w-full">© FIFA WORLD CUP 2026</div>
-          </div>
-        )}
-      </div>
-    )
   }
 
   return (
@@ -1539,401 +760,66 @@ export default function App(): JSX.Element {
 
         {/* Dynamic Views Content Body */}
         <main className="flex-1 py-6">
-          {activeTab === 'landing' && <LandingPage setActiveTab={setActiveTab} />}
+          {activeTab === 'landing' && (
+            <LandingPage setActiveTab={setActiveTab} />
+          )}
           
           {activeTab === 'standings' && (
-            <div className="max-w-[1600px] mx-auto px-4 md:px-8 animate-slide-up">
-              <div className="mb-8 text-center flex flex-col items-center">
-                <h1 className="text-2xl md:text-4xl font-black mb-1 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 uppercase">BẢNG XẾP HẠNG</h1>
-                <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">FIFA World Cup 2026 - 12 Bảng đấu</p>
-              </div>
-              <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-                {calculatedGroups.map((group, gIdx) => (
-                  <div key={gIdx} className={`glass-card rounded-lg overflow-hidden shadow-xl animate-card-pop delay-${gIdx * 50}`}>
-                    <div className="text-white font-bold text-lg py-3 px-4 border-b border-gray-700 bg-gray-800/80">Bảng {String.fromCharCode(65 + gIdx)}</div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-left text-gray-300 whitespace-nowrap">
-                        <thead className="text-[11px] text-gray-400 border-b border-gray-700 bg-black/20">
-                          <tr>
-                            <th className="px-3 py-2.5 font-medium">Đội</th>
-                            <th className="px-2 py-2.5 font-medium text-center" title="Số trận đã đá">ĐĐ</th>
-                            <th className="px-2 py-2.5 font-medium text-center" title="Thắng">Thắng</th>
-                            <th className="px-2 py-2.5 font-medium text-center" title="Hòa">H</th>
-                            <th className="px-2 py-2.5 font-medium text-center" title="Thua">Thua</th>
-                            <th className="px-2 py-2.5 font-medium text-center" title="Bàn Thắng">BT</th>
-                            <th className="px-2 py-2.5 font-medium text-center" title="Số Bàn Thua">SBT</th>
-                            <th className="px-2 py-2.5 font-medium text-center" title="Hiệu số">HS</th>
-                            <th className="px-2 py-2.5 font-bold text-center text-white" title="Điểm">Đ</th>
-                            <th className="px-3 py-2.5 font-medium text-center">3 trận vòng bảng</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {group.map((team, tIdx) => {
-                            const gd = team.gf - team.ga
-                            const pts = team.won * 3 + team.drawn
-                            const teamInfo = TEAMS_INFO[team.name] || { flag: '🏳️' }
-
-                            return (
-                              <tr key={tIdx} className="border-b border-gray-800/50 last:border-0 hover:bg-white/5 transition-colors">
-                                <td className="px-3 py-2 flex items-center gap-2 border-l-2 border-transparent hover:border-blue-500">
-                                  <span className="w-4 text-center text-gray-500 font-bold">{tIdx + 1}</span>
-                                  {renderFlag(team.name, teamInfo.flag, "w-5 h-3.5 object-cover rounded shadow-sm shrink-0")}
-                                  {role === 'admin' ? (
-                                    <input value={team.name} onChange={(e) => handleTeamStatChange(gIdx, tIdx, 'name', e.target.value)} onBlur={() => handlePersistGroups(groupNames)} className="bg-transparent text-white font-medium w-24 md:w-32 outline-none focus:bg-white/10 px-1 py-1 rounded" />
-                                  ) : (
-                                    <span className="text-white font-medium px-1 py-1">{team.name}</span>
-                                  )}
-                                </td>
-                                <td className="px-2 py-2 text-center text-gray-300 font-medium">{team.played}</td>
-                                <td className="px-2 py-2 text-center text-gray-300 font-medium">{team.won}</td>
-                                <td className="px-2 py-2 text-center text-gray-300 font-medium">{team.drawn}</td>
-                                <td className="px-2 py-2 text-center text-gray-300 font-medium">{team.lost}</td>
-                                <td className="px-2 py-2 text-center text-gray-300 font-medium">{team.gf}</td>
-                                <td className="px-2 py-2 text-center text-gray-300 font-medium">{team.ga}</td>
-                                <td className="px-2 py-2 text-center font-medium">{gd > 0 ? `+${gd}` : gd}</td>
-                                <td className="px-2 py-2 text-center font-bold text-white text-base">{pts}</td>
-                                <td className="px-3 py-2">
-                                  <div className="flex gap-1.5 justify-center items-center">
-                                    {team.form.map((res, fIdx) => {
-                                      if (res === '') return null
-                                      return (
-                                        <div key={fIdx} className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${res === 'W' ? 'bg-[#22c55e] text-white' : res === 'L' ? 'bg-[#ef4444] text-white' : 'bg-gray-500 text-white'}`}>
-                                          {res}
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <StandingsPage 
+              calculatedGroups={calculatedGroups}
+              role={role}
+              handleTeamStatChange={handleTeamStatChange}
+              handlePersistGroups={handlePersistGroups}
+              groupNames={groupNames}
+            />
           )}
 
           {activeTab === 'fixtures' && (
-            <div className="max-w-[1600px] mx-auto px-4 md:px-8 animate-slide-up">
-              <div className="mb-8 text-center flex flex-col items-center">
-                <h1 className="text-2xl md:text-4xl font-black mb-1 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 uppercase">KẾT QUẢ THI ĐẤU VÒNG BẢNG</h1>
-                <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-4">Nhấn vào trận đấu để cập nhật tỉ số</p>
-                
-                {/* View Selector Toggle */}
-                <div className="flex bg-[#1e1e2d] border border-gray-750 p-1 rounded-xl shadow-lg">
-                  <button
-                    onClick={() => setFixtureView('group')}
-                    className={`px-4 py-2 rounded-lg text-xs font-black transition-all duration-200 ${
-                      fixtureView === 'group'
-                        ? 'bg-teal-500 text-black shadow-md'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    📊 THEO BẢNG ĐẤU
-                  </button>
-                  <button
-                    onClick={() => setFixtureView('date')}
-                    className={`px-4 py-2 rounded-lg text-xs font-black transition-all duration-200 ${
-                      fixtureView === 'date'
-                        ? 'bg-teal-500 text-black shadow-md'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    📅 THEO LỊCH THI ĐẤU
-                  </button>
-                </div>
-              </div>
-
-              {fixtureView === 'group' ? (
-                /* Group View */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {Array.from({ length: 12 }).map((_, gIdx) => {
-                    const groupLetter = String.fromCharCode(65 + gIdx)
-                    const matchesInGroup = groupMatches.filter(m => {
-                      const t1Info = TEAMS_INFO[m.team1]
-                      return t1Info && t1Info.group === groupLetter
-                    })
-                                        return (
-                        <div key={groupLetter} className={`glass-card rounded-2xl p-4 flex flex-col gap-3 animate-card-pop delay-${gIdx * 50}`}>
-                        <div className="font-extrabold text-sm border-b border-gray-800 pb-2 text-teal-400 flex justify-between items-center tracking-wider">
-                          <span>BẢNG {groupLetter}</span>
-                          <span className="text-[9px] text-gray-400 font-bold bg-gray-800 px-2 py-0.5 rounded-full">6 trận đấu</span>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          {matchesInGroup.map(match => {
-                            const t1Info = TEAMS_INFO[match.team1] || { flag: '🏳️' }
-                            const t2Info = TEAMS_INFO[match.team2] || { flag: '🏳️' }
-                            const hasScore = match.score1 !== null && match.score2 !== null
-                            
-                            return (
-                              <div 
-                                key={match.id}
-                                onClick={() => setEditingMatch(match)}
-                                className="flex items-center justify-between px-2.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 cursor-pointer transition-all duration-200 text-xs text-gray-200 font-bold"
-                              >
-                                <div className="flex items-center gap-1.5 w-[42%] justify-end text-right">
-                                  <span className="truncate uppercase text-[9px] tracking-tight">{match.team1}</span>
-                                  {renderFlag(match.team1, t1Info.flag, "w-4 h-3 object-cover rounded shadow-sm shrink-0")}
-                                </div>
-                                
-                                <div className="w-10 text-center py-0.5 px-1 bg-white text-black font-black rounded text-[9px] shadow-sm shrink-0">
-                                  {hasScore ? `${match.score1}-${match.score2}` : match.time}
-                                </div>
-                                
-                                <div className="flex items-center gap-1.5 w-[42%] justify-start text-left">
-                                  {renderFlag(match.team2, t2Info.flag, "w-4 h-3 object-cover rounded shadow-sm shrink-0")}
-                                  <span className="truncate uppercase text-[9px] tracking-tight">{match.team2}</span>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                /* Date View */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {getGroupedMatchesForColumn(groupMatches).map((group, idx) => (
-                      <div key={group.dateKey} className={`glass-card rounded-2xl p-4 flex flex-col gap-3 animate-card-pop delay-${idx * 50}`}>
-                      <div className="bg-[#137a3e] text-[#f8e025] font-black text-center py-1.5 rounded-lg text-xs uppercase tracking-wider shadow-md border border-[#1b8c4a]">
-                        {group.dayOfWeek} - Ngày {group.date}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        {group.matches.map(match => {
-                          const t1Info = TEAMS_INFO[match.team1] || { flag: '🏳️', group: 'A' }
-                          const t2Info = TEAMS_INFO[match.team2] || { flag: '🏳️', group: 'A' }
-                          const colorInfo = getGroupColor(t1Info.group)
-                          const hasScore = match.score1 !== null && match.score2 !== null
-
-                          return (
-                            <div
-                              key={match.id}
-                              onClick={() => setEditingMatch(match)}
-                              className={`flex items-center justify-between px-3 py-1.5 rounded-full border ${colorInfo.bg} ${colorInfo.border} shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.03] text-xs font-bold ${colorInfo.text}`}
-                            >
-                              <div className="flex items-center gap-1.5 w-[42%] justify-end text-right">
-                                <span className="truncate uppercase text-[9px] tracking-tight" title={match.team1}>
-                                  {match.team1}
-                                </span>
-                                {renderFlag(match.team1, t1Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
-                              </div>
-
-                              <div className="w-8 h-8 rounded-full bg-white text-black font-black flex items-center justify-center text-[9px] shadow-md shrink-0 mx-1 select-none">
-                                {hasScore ? `${match.score1}-${match.score2}` : match.time}
-                              </div>
-
-                              <div className="flex items-center gap-1.5 w-[42%] justify-start text-left">
-                                {renderFlag(match.team2, t2Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
-                                <span className="truncate uppercase text-[9px] tracking-tight" title={match.team2}>
-                                  {match.team2}
-                                </span>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {/* Mascot footer at the end of Date View */}
-                  <div className={`glass-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 text-center h-full min-h-[180px] animate-card-pop delay-${getGroupedMatchesForColumn(groupMatches).length * 50}`}>
-                    <div className="text-4xl animate-bounce select-none">🦌 🐆 🦅</div>
-                    <div className="text-[10px] tracking-widest text-gray-400 font-bold uppercase">Mascots chính thức</div>
-                    <div className="text-xs text-yellow-400 font-extrabold">UNITED 2026</div>
-                    <div className="text-[9px] text-gray-500 font-semibold border-t border-white/5 pt-2 w-full">© FIFA WORLD CUP 2026</div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <FixturesPage 
+              groupMatches={groupMatches}
+              fixtureView={fixtureView}
+              setFixtureView={setFixtureView}
+              setEditingMatch={setEditingMatch}
+            />
           )}
 
           {activeTab === 'knockout' && (
-            <div className="max-w-[1600px] mx-auto px-4 md:px-8 animate-slide-up">
-              <div className="mb-8 text-center flex flex-col items-center">
-                <h1 className="text-2xl md:text-4xl font-black mb-1 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 uppercase">VÒNG KNOCKOUT</h1>
-                <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">Nhấp chọn đội chiến thắng để đi tiếp</p>
-              </div>
-              
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 sticky left-0 px-1">
-                <h3 className="text-xl font-bold border-l-4 border-blue-500 pl-3">SƠ ĐỒ THI ĐẤU</h3>
-                {role === 'admin' && (
-                  <button
-                    onClick={handleAutoFillKnockout}
-                    className="mt-2 md:mt-0 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-extrabold text-xs rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-1.5"
-                  >
-                    🔄 CẬP NHẬT ĐỘI TỪ VÒNG BẢNG
-                  </button>
-                )}
-              </div>
-
-              <div className="overflow-x-auto pb-8 relative">
-                <div className="min-w-[1400px] flex justify-between gap-4 py-4 relative" id="bracket-container">
-                  <BracketLines winners={winners} />
-                  <div className="flex flex-col justify-around gap-2 w-36 animate-ko-slide-left">{LAYOUT.col1.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-8 animate-ko-slide-left delay-200">{LAYOUT.col2.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-24 animate-ko-slide-left delay-400">{LAYOUT.col3.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-48 animate-ko-slide-left delay-600">{LAYOUT.col4.map(id => <MatchBox key={id} matchId={id} />)}</div>
-
-                  <div className="flex flex-col justify-center items-center gap-12 w-48 relative animate-ko-pop-center delay-800">
-                    <div className="flex flex-col items-center"><MatchBox matchId="m31" /></div>
-                    <div className="text-6xl drop-shadow-[0_0_30px_rgba(250,204,21,0.8)] animate-pulse my-4">🏆</div>
-                    <div className="flex flex-col items-center transform scale-110"><div className="absolute inset-0 bg-yellow-500/20 blur-xl rounded-full"></div><div className="relative z-10"><MatchBox matchId="m32" /></div></div>
-                  </div>
-
-                  <div className="flex flex-col justify-around gap-2 w-36 py-48 animate-ko-slide-right delay-600">{LAYOUT.col6.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-24 animate-ko-slide-right delay-400">{LAYOUT.col7.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 py-8 animate-ko-slide-right delay-200">{LAYOUT.col8.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                  <div className="flex flex-col justify-around gap-2 w-36 animate-ko-slide-right">{LAYOUT.col9.map(id => <MatchBox key={id} matchId={id} />)}</div>
-                </div>
-              </div>
-            </div>
+            <KnockoutPage 
+              role={role}
+              knockoutTab={knockoutTab}
+              setKnockoutTab={setKnockoutTab}
+              handleAutoFillKnockout={handleAutoFillKnockout}
+              winners={winners}
+              knockoutMatches={knockoutMatches}
+              getTeamForMatch={getTeamForMatch}
+              setEditingMatch={setEditingMatch}
+              handleWinnerSelect={handleWinnerSelect}
+              baseTeams={baseTeams}
+              handleBaseTeamChange={handleBaseTeamChange}
+              handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
+            />
           )}
         </main>
       </div>
 
+      {/* Welcome / Access Role Modal */}
+      {role === null && (
+        <RoleSelectorModal handleSelectRole={handleSelectRole} />
+      )}
+
       {/* Modern Dialog Modal to view/input Match Scores */}
-      {editingMatch && (() => {
-        const stadium = editingMatch.stadiumId ? STADIUMS_INFO[editingMatch.stadiumId] : null
-        
-        const parseScorers = (scorersStr: string | null | undefined): string[] => {
-          if (!scorersStr || scorersStr === 'null') return []
-          try {
-            let clean = scorersStr.replace(/[{}"“‘”’[\]]/g, '')
-            if (!clean.trim()) return []
-            return clean.split(',').map(s => s.trim())
-          } catch (e) {
-            return [scorersStr]
-          }
-        }
-
-        const homeScorersList = parseScorers(editingMatch.homeScorers)
-        const awayScorersList = parseScorers(editingMatch.awayScorers)
-        const isAdmin = role === 'admin'
-
-        return (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-[#1e1e2d] border border-gray-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-transform">
-              <div className="bg-gradient-to-r from-teal-500/10 to-blue-500/10 border-b border-gray-800 px-8 py-5 flex items-center justify-between">
-                <h3 className="font-extrabold text-sm tracking-tight text-white uppercase">
-                  {isAdmin ? 'Cập Nhật Tỉ Số' : 'Thông Tin Trận Đấu'}
-                </h3>
-                <button
-                  onClick={() => setEditingMatch(null)}
-                  className="text-gray-400 hover:text-white transition-colors text-2xl font-bold"
-                >
-                  &times;
-                </button>
-              </div>
-
-              <div className="p-8 flex flex-col gap-6">
-                <div className="flex items-start justify-between gap-6">
-                  <div className="flex flex-col items-center gap-3 w-[42%] text-center">
-                    {renderFlag(editingMatch.team1, (TEAMS_INFO[editingMatch.team1] || { flag: '🏳️' }).flag, "w-16 h-11 object-cover rounded-md shadow-md shrink-0")}
-                    <span className="font-extrabold text-sm text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team1}>{editingMatch.team1}</span>
-                    {isAdmin ? (
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="-"
-                        value={modalScore1}
-                        onChange={(e) => setModalScore1(e.target.value)}
-                        className="w-16 h-14 bg-black/40 border border-gray-700 rounded-lg text-center text-2xl font-bold text-white outline-none focus:border-green-500 transition-colors"
-                      />
-                    ) : (
-                      <span className="text-4xl font-black text-white mt-1">{editingMatch.score1 !== null ? editingMatch.score1 : '-'}</span>
-                    )}
-
-                    {homeScorersList.length > 0 && (
-                      <div className="text-xs text-gray-400 mt-2 font-medium bg-black/25 py-1.5 px-3 rounded-lg w-full text-center">
-                        {homeScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-gray-500 font-black text-sm uppercase self-start pt-8">VS</div>
-
-                  <div className="flex flex-col items-center gap-3 w-[42%] text-center">
-                    {renderFlag(editingMatch.team2, (TEAMS_INFO[editingMatch.team2] || { flag: '🏳️' }).flag, "w-16 h-11 object-cover rounded-md shadow-md shrink-0")}
-                    <span className="font-extrabold text-sm text-gray-200 uppercase tracking-wide truncate w-full" title={editingMatch.team2}>{editingMatch.team2}</span>
-                    {isAdmin ? (
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="-"
-                        value={modalScore2}
-                        onChange={(e) => setModalScore2(e.target.value)}
-                        className="w-16 h-14 bg-black/40 border border-gray-700 rounded-lg text-center text-2xl font-bold text-white outline-none focus:border-green-500 transition-colors"
-                      />
-                    ) : (
-                      <span className="text-4xl font-black text-white mt-1">{editingMatch.score2 !== null ? editingMatch.score2 : '-'}</span>
-                    )}
-
-                    {awayScorersList.length > 0 && (
-                      <div className="text-xs text-gray-400 mt-2 font-medium bg-black/25 py-1.5 px-3 rounded-lg w-full text-center">
-                        {awayScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {stadium && (
-                  <div className="border-t border-white/5 pt-4 mt-2 flex flex-col gap-1 text-center">
-                    <span className="text-xs uppercase font-bold text-gray-400">Sân vận động</span>
-                    <span className="text-sm font-extrabold text-amber-600">{stadium.name}</span>
-                    <span className="text-xs text-gray-400 font-medium">{stadium.city}, {stadium.country}</span>
-                  </div>
-                )}
-
-                <div className="flex gap-3 justify-end mt-2 border-t border-white/5 pt-5">
-                  {isAdmin ? (
-                    <>
-                      <button
-                        onClick={() => {
-                          handleSaveScore(editingMatch.id, null, null)
-                          setEditingMatch(null)
-                        }}
-                        className="px-4 py-2.5 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-xs font-bold transition-all"
-                      >
-                        Xóa Tỉ Số
-                      </button>
-                      <button
-                        onClick={() => setEditingMatch(null)}
-                        className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs font-bold transition-all"
-                      >
-                        Hủy
-                      </button>
-                      <button
-                        onClick={() => {
-                          const s1 = modalScore1 === '' ? null : Number(modalScore1)
-                          const s2 = modalScore2 === '' ? null : Number(modalScore2)
-                          handleSaveScore(editingMatch.id, s1, s2)
-                          setEditingMatch(null)
-                        }}
-                        className="px-5 py-2.5 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-xs transition-all shadow-md shadow-green-500/20"
-                      >
-                        Lưu
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => setEditingMatch(null)}
-                      className="px-8 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
-                    >
-                      Đóng
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
-      {role === null && <RoleSelectorModal />}
+      {editingMatch && (
+        <MatchModal 
+          editingMatch={editingMatch}
+          setEditingMatch={setEditingMatch}
+          modalScore1={modalScore1}
+          setModalScore1={setModalScore1}
+          modalScore2={modalScore2}
+          setModalScore2={setModalScore2}
+          role={role}
+          handleSaveScore={handleSaveScore}
+        />
+      )}
     </div>
   )
 }
