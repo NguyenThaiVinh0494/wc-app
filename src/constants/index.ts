@@ -151,14 +151,14 @@ export const BRACKET_FLOW: { [k: string]: any } = {
 }
 
 export const LAYOUT: { [k: string]: string[] } = {
-  col1: ['m1','m2','m3','m4','m5','m6','m7','m8'],
-  col2: ['m17','m18','m19','m20'],
+  col1: ['m1','m3','m2','m5','m4','m6','m7','m8'],
+  col2: ['m18','m17','m19','m20'],
   col3: ['m25','m26'],
   col4: ['m29'],
   col6: ['m30'],
   col7: ['m27','m28'],
-  col8: ['m21','m22','m23','m24'],
-  col9: ['m9','m10','m11','m12','m13','m14','m15','m16']
+  col8: ['m21','m22','m24','m23'],
+  col9: ['m11','m12','m9','m10','m14','m16','m13','m15']
 }
 
 export const initialKnockoutMatches: GroupMatch[] = [
