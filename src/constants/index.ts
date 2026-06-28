@@ -132,9 +132,9 @@ export const BRACKET_FLOW: { [k: string]: any } = {
   m17: { source1: 'm2', source2: 'm5' },
   m18: { source1: 'm1', source2: 'm3' },
   m19: { source1: 'm4', source2: 'm6' },
-  m20: { source1: 'm7', source2: 'm8' },
+  m20: { source1: 'm7', source2: 'm10' },
   m21: { source1: 'm11', source2: 'm12' },
-  m22: { source1: 'm9', source2: 'm10' },
+  m22: { source1: 'm9', source2: 'm8' },
   m23: { source1: 'm14', source2: 'm16' },
   m24: { source1: 'm13', source2: 'm15' },
   
@@ -143,22 +143,22 @@ export const BRACKET_FLOW: { [k: string]: any } = {
   m27: { source1: 'm21', source2: 'm22' },
   m28: { source1: 'm23', source2: 'm24' },
   
-  m29: { source1: 'm25', source2: 'm26' },
-  m30: { source1: 'm27', source2: 'm28' },
+  m29: { source1: 'm25', source2: 'm27' },
+  m30: { source1: 'm26', source2: 'm28' },
   
   m31: { source1: 'm29', source2: 'm30', isLoser: true },
   m32: { source1: 'm29', source2: 'm30' }
 }
 
 export const LAYOUT: { [k: string]: string[] } = {
-  col1: ['m1','m3','m2','m5','m4','m6','m7','m8'],
-  col2: ['m18','m17','m19','m20'],
-  col3: ['m25','m26'],
+  col1: ['m2', 'm5', 'm1', 'm3', 'm11', 'm12', 'm9', 'm8'],
+  col2: ['m17', 'm18', 'm21', 'm22'],
+  col3: ['m25', 'm27'],
   col4: ['m29'],
   col6: ['m30'],
-  col7: ['m27','m28'],
-  col8: ['m21','m22','m24','m23'],
-  col9: ['m11','m12','m9','m10','m14','m16','m13','m15']
+  col7: ['m26', 'm28'],
+  col8: ['m19', 'm20', 'm23', 'm24'],
+  col9: ['m4', 'm6', 'm7', 'm10', 'm14', 'm16', 'm13', 'm15']
 }
 
 export const initialKnockoutMatches: GroupMatch[] = [
