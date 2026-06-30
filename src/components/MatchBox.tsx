@@ -37,6 +37,17 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
   const title = getMatchTitle(matchId)
   const isAdmin = role === 'admin'
 
+  const [val1, setVal1] = React.useState(t1)
+  const [val2, setVal2] = React.useState(t2)
+
+  React.useEffect(() => {
+    setVal1(t1)
+  }, [t1])
+
+  React.useEffect(() => {
+    setVal2(t2)
+  }, [t2])
+
   const hasScore = score1 !== null && score2 !== null
   const hasPenalties = homePenalty !== null && awayPenalty !== null
 
@@ -50,9 +61,9 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
       >
         {isR32 && isAdmin && !hasScore ? (
           <input 
-            value={t1} 
-            onChange={(e) => handleBaseTeamChange(matchId, 1, e.target.value)} 
-            onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} 
+            value={val1} 
+            onChange={(e) => setVal1(e.target.value)} 
+            onBlur={() => handleBaseTeamChange(matchId, 1, val1)} 
             onClick={(e) => e.stopPropagation()} 
             className="bg-transparent w-full outline-none focus:bg-black/5 px-1 rounded text-slate-800 placeholder-slate-400" 
             placeholder="Đội..." 
@@ -78,9 +89,9 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
       >
         {isR32 && isAdmin && !hasScore ? (
           <input 
-            value={t2} 
-            onChange={(e) => handleBaseTeamChange(matchId, 2, e.target.value)} 
-            onBlur={() => handlePersistKnockoutBaseTeams(baseTeams)} 
+            value={val2} 
+            onChange={(e) => setVal2(e.target.value)} 
+            onBlur={() => handleBaseTeamChange(matchId, 2, val2)} 
             onClick={(e) => e.stopPropagation()} 
             className="bg-transparent w-full outline-none focus:bg-black/5 px-1 rounded text-slate-800 placeholder-slate-400" 
             placeholder="Đội..." 

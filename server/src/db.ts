@@ -98,7 +98,10 @@ function migrateKnockoutMatches(db: any): boolean {
     
     if (db.knockout.baseTeams) {
       const b = db.knockout.baseTeams
-      if (b.m8_t1 === 'Nhất Bảng G' || b.m8_t1 === 'Nhất Bảng L' || b.m8_t1 === 'England' || b.m8_t1 === 'Belgium') {
+      if (
+        b.m8_t1 === 'Nhất Bảng G' || b.m8_t1 === 'Nhất Bảng L' || b.m8_t1 === 'England' || b.m8_t1 === 'Belgium' || b.m8_t1 === 'Anh' ||
+        b.m10_t1 === 'Nhất Bảng G' || b.m10_t1 === 'Nhất Bảng L' || b.m10_t1 === 'England' || b.m10_t1 === 'Belgium' || b.m10_t1 === 'Bỉ'
+      ) {
         b.m8_t1 = 'Bỉ'
         b.m8_t2 = 'Senegal'
         b.m10_t1 = 'Anh'

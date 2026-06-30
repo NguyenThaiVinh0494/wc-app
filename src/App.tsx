@@ -74,7 +74,12 @@ export default function App(): JSX.Element {
     if (baseSaved) {
       try {
         const parsedBase = JSON.parse(baseSaved)
-        if (parsedBase.m8_t1 === 'Nhất Bảng G' || parsedBase.m8_t1 === 'Nhất Bảng L' || parsedBase.m8_t1 === 'England' || parsedBase.m8_t1 === 'Belgium') {
+        const t8 = parsedBase.m8_t1
+        const t10 = parsedBase.m10_t1
+        if (
+          t8 === 'Nhất Bảng G' || t8 === 'Nhất Bảng L' || t8 === 'England' || t8 === 'Belgium' || t8 === 'Anh' ||
+          t10 === 'Nhất Bảng G' || t10 === 'Nhất Bảng L' || t10 === 'England' || t10 === 'Belgium' || t10 === 'Bỉ'
+        ) {
           localStorage.removeItem('wc2026_knockoutMatches')
           localStorage.removeItem('wc2026_baseTeams')
           localStorage.removeItem('wc2026_winners')
@@ -455,6 +460,15 @@ export default function App(): JSX.Element {
   const handleBaseTeamChange = (matchId: string, slot: number, value: string) => {
     setBaseTeams(prev => {
       const next = { ...prev, [`${matchId}_t${slot}`]: value }
+      localStorage.setItem('wc2026_baseTeams', JSON.stringify(next))
+      
+      fetch('/api/knockout', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baseTeams: next })
+      })
+      .catch(err => console.error('Error saving knockout base teams:', err))
+      
       return next
     })
   }
