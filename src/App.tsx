@@ -37,6 +37,7 @@ export default function App(): JSX.Element {
 
   const [activeTab, setActiveTab] = useState<'landing' | 'standings' | 'fixtures' | 'knockout'>('landing')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false)
   const [fixtureView, setFixtureView] = useState<'date' | 'group'>('group')
   const [isSyncingScores, setIsSyncingScores] = useState<boolean>(false)
 
@@ -580,26 +581,49 @@ export default function App(): JSX.Element {
   return (
     <div className="premium-bg text-slate-800 font-sans flex min-h-screen">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#131424]/90 border-r border-white/10 backdrop-blur-md shrink-0 h-screen sticky top-0 z-10">
+      <aside className={`hidden md:flex flex-col ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-[#131424]/90 border-r border-white/10 backdrop-blur-md shrink-0 h-screen sticky top-0 z-10 transition-all duration-300`}>
         {/* Sidebar Header / Logo */}
         <div 
-          onClick={() => {
-            setActiveTab('landing')
-            setIsMobileMenuOpen(false)
-          }}
-          className="h-20 flex items-center gap-2.5 px-6 border-b border-white/5 cursor-pointer group"
+          className="h-20 flex items-center justify-between px-4 border-b border-white/5"
         >
-          <span className="text-2xl transition-transform group-hover:scale-110 select-none">🏆</span>
-          <div className="flex flex-col">
-            <span className="font-black text-sm uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-400 group-hover:brightness-110">
-              World Cup 2026
-            </span>
-            <span className="text-[8px] font-bold text-yellow-400 uppercase tracking-widest">United Tournament</span>
-          </div>
+          {isSidebarCollapsed ? (
+            <button 
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="mx-auto p-1.5 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400 hover:bg-teal-500/20 transition-all text-xs font-extrabold flex items-center justify-center cursor-pointer shadow-md"
+              title="Mở rộng menu"
+            >
+              ▶
+            </button>
+          ) : (
+            <>
+              <div 
+                onClick={() => {
+                  setActiveTab('landing')
+                  setIsMobileMenuOpen(false)
+                }}
+                className="flex items-center gap-2.5 px-2 cursor-pointer group"
+              >
+                <span className="text-2xl transition-transform group-hover:scale-110 select-none">🏆</span>
+                <div className="flex flex-col">
+                  <span className="font-black text-sm uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-400 group-hover:brightness-110">
+                    World Cup 2026
+                  </span>
+                  <span className="text-[8px] font-bold text-yellow-400 uppercase tracking-widest">United Tournament</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsSidebarCollapsed(true)}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                title="Thu gọn menu"
+              >
+                ◀
+              </button>
+            </>
+          )}
         </div>
 
         {/* Sidebar Navigation */}
-        <nav className="flex-1 py-6 px-4 flex flex-col gap-1.5">
+        <nav className="flex-1 py-6 px-4 flex flex-col gap-1.5 overflow-x-hidden">
           {[
             { id: 'standings', label: 'BẢNG XẾP HẠNG', icon: '📊' },
             { id: 'fixtures', label: 'KẾT QUẢ VÒNG BẢNG', icon: '⚽' },
@@ -613,14 +637,15 @@ export default function App(): JSX.Element {
                   setActiveTab(item.id as any)
                   setIsMobileMenuOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left transition-all duration-200 ${
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4 gap-3'} py-3 rounded-xl text-xs font-black tracking-wider text-left transition-all duration-200 ${
                   isActive 
                     ? 'bg-gradient-to-r from-teal-500/20 to-blue-500/20 border border-teal-500/30 text-teal-300 shadow-md shadow-teal-500/5' 
                     : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }`}
+                title={isSidebarCollapsed ? item.label : undefined}
               >
                 <span className="text-base select-none">{item.icon}</span>
-                <span>{item.label}</span>
+                {!isSidebarCollapsed && <span>{item.label}</span>}
               </button>
             )
           })}
@@ -631,19 +656,21 @@ export default function App(): JSX.Element {
               <button
                 onClick={handleSyncExternalScores}
                 disabled={isSyncingScores}
-                className={`mt-auto mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md shadow-emerald-500/5 cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
+                className={`mt-auto flex items-center justify-center gap-2.5 ${isSidebarCollapsed ? 'w-12 h-12 p-0 mx-auto' : 'mx-4 px-4 py-3'} rounded-xl text-xs font-black tracking-wider text-left text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all duration-200 shadow-md shadow-emerald-500/5 cursor-pointer ${isSyncingScores ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
+                title={isSidebarCollapsed ? (isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỶ SỐ TỰ ĐỘNG') : undefined}
               >
                 <span className="text-base select-none">{isSyncingScores ? '⏳' : '⚡'}</span>
-                <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỈ SỐ TỰ ĐỘNG'}</span>
+                {!isSidebarCollapsed && <span>{isSyncingScores ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT TỶ SỐ TỰ ĐỘNG'}</span>}
               </button>
 
               {/* Reset button at the bottom of navigation */}
               <button
                 onClick={handleResetAll}
-                className="mx-4 mb-2 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md shadow-red-500/5 cursor-pointer animate-pulse hover:animate-none"
+                className={`flex items-center justify-center gap-2.5 ${isSidebarCollapsed ? 'w-12 h-12 p-0 mx-auto mb-2' : 'mx-4 mb-2 px-4 py-3'} rounded-xl text-xs font-black tracking-wider text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200 shadow-md shadow-red-500/5 cursor-pointer animate-pulse hover:animate-none`}
+                title={isSidebarCollapsed ? 'KHÔI PHỤC BAN ĐẦU' : undefined}
               >
                 <span className="text-base select-none">🔄</span>
-                <span>KHÔI PHỤC BAN ĐẦU</span>
+                {!isSidebarCollapsed && <span>KHÔI PHỤC BAN ĐẦU</span>}
               </button>
             </>
           ) : (
@@ -657,17 +684,18 @@ export default function App(): JSX.Element {
                 localStorage.removeItem('wc2026_auth')
                 setRole(null)
               }}
-              className="mx-4 mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs font-black tracking-wider text-left text-blue-450 hover:text-blue-350 hover:bg-blue-500/10 border border-blue-500/20 transition-all duration-200 shadow-md cursor-pointer"
+              className={`flex items-center justify-center gap-2.5 ${isSidebarCollapsed ? 'w-12 h-12 p-0 mx-auto mb-4' : 'mx-4 mb-4 px-4 py-3'} rounded-xl text-xs font-black tracking-wider text-left text-blue-455 hover:text-blue-355 hover:bg-blue-500/10 border border-blue-500/20 transition-all duration-200 shadow-md cursor-pointer`}
+              title={isSidebarCollapsed ? 'ĐỔI CHẾ ĐỘ TRUY CẬP' : undefined}
             >
-              <span className="text-base select-none">🔄</span>
-              <span>ĐỔI CHẾ ĐỘ TRUY CẬP</span>
+              <span className="text-base select-none">🔑</span>
+              {!isSidebarCollapsed && <span>ĐỔI CHẾ ĐỘ TRUY CẬP</span>}
             </button>
           )}
         </nav>
 
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-white/5 text-[9px] text-gray-500 font-bold text-center uppercase tracking-wider">
-          © FIFA WORLD CUP 2026
+          {isSidebarCollapsed ? '2026' : '© FIFA WORLD CUP 2026'}
         </div>
       </aside>
 
