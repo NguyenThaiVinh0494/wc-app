@@ -97,11 +97,12 @@ function migrateKnockoutMatches(db: any): boolean {
     }
     
     if (db.knockout.baseTeams) {
-      if (db.knockout.baseTeams.m8_t1 === 'Nhất Bảng L' || db.knockout.baseTeams.m8_t1 === 'Anh' || db.knockout.baseTeams.m8_t1 === 'England') {
-        db.knockout.baseTeams.m8_t1 = 'Nhất Bảng G'
-        db.knockout.baseTeams.m8_t2 = 'Hạng 3 A/E/H/I/J'
-        db.knockout.baseTeams.m10_t1 = 'Nhất Bảng L'
-        db.knockout.baseTeams.m10_t2 = 'Hạng 3 E/H/I/J/K'
+      const b = db.knockout.baseTeams
+      if (b.m8_t1 === 'Nhất Bảng G' || b.m8_t1 === 'Bỉ' || b.m8_t1 === 'Nhất Bảng L' || b.m8_t1 === 'Anh' || b.m8_t1 === 'England') {
+        b.m8_t1 = 'Belgium'
+        b.m8_t2 = 'Senegal'
+        b.m10_t1 = 'England'
+        b.m10_t2 = 'DR Congo'
         changed = true
       }
     }

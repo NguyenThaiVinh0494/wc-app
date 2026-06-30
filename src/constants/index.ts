@@ -116,10 +116,10 @@ export const initialR32Teams: { [k: string]: string } = {
   m5_t1: 'Nhất Bảng I', m5_t2: 'Hạng 3 C/D/F/G/H',
   m6_t1: 'Nhì Bảng E', m6_t2: 'Nhì Bảng I',
   m7_t1: 'Nhất Bảng A', m7_t2: 'Hạng 3 C/E/F/H/I',
-  m8_t1: 'Nhất Bảng G', m8_t2: 'Hạng 3 A/E/H/I/J',
+  m8_t1: 'Belgium', m8_t2: 'Senegal',
   
   m9_t1: 'Nhất Bảng D', m9_t2: 'Hạng 3 B/E/F/I/J',
-  m10_t1: 'Nhất Bảng L', m10_t2: 'Hạng 3 E/H/I/J/K',
+  m10_t1: 'England', m10_t2: 'DR Congo',
   m11_t1: 'Nhì Bảng K', m11_t2: 'Nhì Bảng L',
   m12_t1: 'Nhất Bảng H', m12_t2: 'Nhì Bảng J',
   m13_t1: 'Nhất Bảng B', m13_t2: 'Hạng 3 E/F/G/I/J',

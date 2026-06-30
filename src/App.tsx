@@ -68,6 +68,21 @@ export default function App(): JSX.Element {
   })
   const [knockoutMatches, setKnockoutMatches] = useState<GroupMatch[]>(() => {
     const saved = localStorage.getItem('wc2026_knockoutMatches')
+    const baseSaved = localStorage.getItem('wc2026_baseTeams')
+    
+    // Auto-heal baseTeams placeholders
+    if (baseSaved) {
+      try {
+        const parsedBase = JSON.parse(baseSaved)
+        if (parsedBase.m8_t1 === 'Nhất Bảng G' || parsedBase.m8_t1 === 'Nhất Bảng L' || parsedBase.m8_t1 === 'Anh' || parsedBase.m8_t1 === 'England') {
+          localStorage.removeItem('wc2026_knockoutMatches')
+          localStorage.removeItem('wc2026_baseTeams')
+          localStorage.removeItem('wc2026_winners')
+          return initialKnockoutMatches
+        }
+      } catch (e) {}
+    }
+
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
@@ -139,10 +154,13 @@ export default function App(): JSX.Element {
     fetch('/api/state')
       .then(res => res.json())
       .then(data => {
-        const hasBackendScores = data.matches && data.matches.some((m: any) => m.score1 !== null || m.score2 !== null)
-        const hasBackendWinners = data.knockout && data.knockout.winners && Object.keys(data.knockout.winners).length > 0
+        // Robust cold start detection: check if backend has actual user modifications beyond the default initial state
         const hasBackendKOMatches = data.knockout && data.knockout.matches && data.knockout.matches.some((m: any) => m.score1 !== null || m.score2 !== null)
+        const hasBackendWinners = data.knockout && data.knockout.winners && Object.keys(data.knockout.winners).length > 0
+        const hasBackendBaseTeamEdits = data.knockout && data.knockout.baseTeams && JSON.stringify(data.knockout.baseTeams) !== JSON.stringify(initialR32Teams)
         
+        const hasBackendEdits = hasBackendKOMatches || hasBackendWinners || hasBackendBaseTeamEdits
+
         const localGroupsStr = localStorage.getItem('wc2026_groupNames')
         const localMatchesStr = localStorage.getItem('wc2026_groupMatches')
         const localBaseTeamsStr = localStorage.getItem('wc2026_baseTeams')
@@ -151,7 +169,7 @@ export default function App(): JSX.Element {
 
         const isLocalEmpty = !localMatchesStr && !localWinnersStr && !localKnockoutMatchesStr
 
-        if (hasBackendScores || hasBackendWinners || hasBackendKOMatches || isLocalEmpty) {
+        if (hasBackendEdits || isLocalEmpty) {
           if (data.groups) {
             const names = data.groups.map((g: any) => g.map((t: any) => t.name))
             setGroupNames(names)
