@@ -67,7 +67,27 @@ export default function App(): JSX.Element {
   })
   const [knockoutMatches, setKnockoutMatches] = useState<GroupMatch[]>(() => {
     const saved = localStorage.getItem('wc2026_knockoutMatches')
-    return saved ? JSON.parse(saved) : initialKnockoutMatches
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        const m8 = parsed.find((m: any) => m.id === 'm8')
+        if (m8 && (m8.team1 === 'Anh' || m8.team1 === 'England' || m8.stadiumId === '7')) {
+          localStorage.removeItem('wc2026_knockoutMatches')
+          localStorage.removeItem('wc2026_baseTeams')
+          localStorage.removeItem('wc2026_winners')
+          return initialKnockoutMatches
+        }
+        const m1 = parsed.find((m: any) => m.id === 'm1')
+        if (m1 && (m1.time === '12h' || m1.date === '28/6/2026')) {
+          localStorage.removeItem('wc2026_knockoutMatches')
+          return initialKnockoutMatches
+        }
+        return parsed
+      } catch (e) {
+        return initialKnockoutMatches
+      }
+    }
+    return initialKnockoutMatches
   })
   const [knockoutTab, setKnockoutTab] = useState<'bracket' | 'results'>('bracket')
   const [editingMatch, setEditingMatch] = useState<GroupMatch | null>(null)

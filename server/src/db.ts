@@ -67,23 +67,37 @@ function migrateKnockoutMatches(db: any): boolean {
       const m8 = db.knockout.matches.find((m: any) => m.id === 'm8')
       const m10 = db.knockout.matches.find((m: any) => m.id === 'm10')
       
-      if (m8 && m8.stadiumId === '7') {
+      if (m8 && (m8.team1 === 'England' || m8.team1 === 'Anh' || m8.stadiumId === '7')) {
         m8.stadiumId = '14'
         m8.team1 = 'Belgium'
         m8.team2 = 'Senegal'
         changed = true
       }
       
-      if (m10 && m10.stadiumId === '14') {
+      if (m10 && (m10.team1 === 'Winner Group G' || m10.team1 === 'Bỉ' || m10.stadiumId === '14')) {
         m10.stadiumId = '7'
         m10.team1 = 'England'
         m10.team2 = 'DR Congo'
         changed = true
       }
+
+      // Check if time has the old format (e.g. "12h") to update all matches to Vietnam times
+      const m1 = db.knockout.matches.find((m: any) => m.id === 'm1')
+      if (m1 && (m1.time === '12h' || m1.date === '28/6/2026')) {
+        initialKnockoutMatches.forEach((initM: any) => {
+          const dbM = db.knockout.matches.find((m: any) => m.id === initM.id)
+          if (dbM) {
+            dbM.date = initM.date
+            dbM.dayOfWeek = initM.dayOfWeek
+            dbM.time = initM.time
+          }
+        })
+        changed = true
+      }
     }
     
     if (db.knockout.baseTeams) {
-      if (db.knockout.baseTeams.m8_t1 === 'Nhất Bảng L') {
+      if (db.knockout.baseTeams.m8_t1 === 'Nhất Bảng L' || db.knockout.baseTeams.m8_t1 === 'Anh' || db.knockout.baseTeams.m8_t1 === 'England') {
         db.knockout.baseTeams.m8_t1 = 'Nhất Bảng G'
         db.knockout.baseTeams.m8_t2 = 'Hạng 3 A/E/H/I/J'
         db.knockout.baseTeams.m10_t1 = 'Nhất Bảng L'
