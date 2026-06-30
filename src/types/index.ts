@@ -21,6 +21,8 @@ export interface GroupMatch {
   homeScorers?: string | null
   awayScorers?: string | null
   stadiumId?: string | null
+  homePenalty?: number | null
+  awayPenalty?: number | null
 }
 
 export interface GroupedMatches {

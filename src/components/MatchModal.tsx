@@ -10,8 +10,12 @@ interface MatchModalProps {
   setModalScore1: (val: string) => void
   modalScore2: string
   setModalScore2: (val: string) => void
+  modalPenalty1: string
+  setModalPenalty1: (val: string) => void
+  modalPenalty2: string
+  setModalPenalty2: (val: string) => void
   role: 'admin' | 'guest' | null
-  handleSaveScore: (matchId: string, s1: number | null, s2: number | null) => void
+  handleSaveScore: (matchId: string, s1: number | null, s2: number | null, p1: number | null, p2: number | null) => void
 }
 
 export const MatchModal: React.FC<MatchModalProps> = ({
@@ -21,6 +25,10 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   setModalScore1,
   modalScore2,
   setModalScore2,
+  modalPenalty1,
+  setModalPenalty1,
+  modalPenalty2,
+  setModalPenalty2,
   role,
   handleSaveScore
 }) => {
@@ -40,6 +48,10 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   const homeScorersList = parseScorers(editingMatch.homeScorers)
   const awayScorersList = parseScorers(editingMatch.awayScorers)
   const isAdmin = role === 'admin'
+  const isKnockout = !editingMatch.id.startsWith('gm')
+  const isTie = isAdmin 
+    ? (modalScore1 !== '' && modalScore2 !== '' && Number(modalScore1) === Number(modalScore2))
+    : (editingMatch.score1 !== null && editingMatch.score2 !== null && editingMatch.score1 === editingMatch.score2)
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
@@ -107,6 +119,47 @@ export const MatchModal: React.FC<MatchModalProps> = ({
             </div>
           </div>
 
+          {isKnockout && isTie && (
+            <div className="flex flex-col items-center gap-2 border-t border-white/5 pt-4 w-full">
+              <span className="text-[10px] uppercase font-extrabold text-yellow-500 tracking-widest">LUÂN LƯU (PENALTIES)</span>
+              <div className="flex items-center justify-between gap-6 w-full mt-2">
+                <div className="flex flex-col items-center gap-1.5 w-[42%] text-center">
+                  {isAdmin ? (
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Pen"
+                      value={modalPenalty1}
+                      onChange={(e) => setModalPenalty1(e.target.value)}
+                      className="w-16 h-10 bg-black/40 border border-gray-750 rounded-lg text-center text-lg font-bold text-white outline-none focus:border-yellow-500 transition-colors"
+                    />
+                  ) : (
+                    <span className="text-xl font-black text-slate-300">
+                      {editingMatch.homePenalty !== null && editingMatch.homePenalty !== undefined ? `(${editingMatch.homePenalty})` : ''}
+                    </span>
+                  )}
+                </div>
+                <div className="text-gray-500 font-extrabold text-sm uppercase">-</div>
+                <div className="flex flex-col items-center gap-1.5 w-[42%] text-center">
+                  {isAdmin ? (
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Pen"
+                      value={modalPenalty2}
+                      onChange={(e) => setModalPenalty2(e.target.value)}
+                      className="w-16 h-10 bg-black/40 border border-gray-750 rounded-lg text-center text-lg font-bold text-white outline-none focus:border-yellow-500 transition-colors"
+                    />
+                  ) : (
+                    <span className="text-xl font-black text-slate-300">
+                      {editingMatch.awayPenalty !== null && editingMatch.awayPenalty !== undefined ? `(${editingMatch.awayPenalty})` : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {stadium && (
             <div className="border-t border-white/5 pt-4 mt-2 flex flex-col gap-1 text-center">
               <span className="text-xs uppercase font-bold text-gray-400">Sân vận động</span>
@@ -120,7 +173,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
               <>
                 <button
                   onClick={() => {
-                    handleSaveScore(editingMatch.id, null, null)
+                    handleSaveScore(editingMatch.id, null, null, null, null)
                     setEditingMatch(null)
                   }}
                   className="px-4 py-2.5 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-xs font-bold transition-all"
@@ -137,7 +190,9 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                   onClick={() => {
                     const s1 = modalScore1 === '' ? null : Number(modalScore1)
                     const s2 = modalScore2 === '' ? null : Number(modalScore2)
-                    handleSaveScore(editingMatch.id, s1, s2)
+                    const p1 = modalPenalty1 === '' ? null : Number(modalPenalty1)
+                    const p2 = modalPenalty2 === '' ? null : Number(modalPenalty2)
+                    handleSaveScore(editingMatch.id, s1, s2, p1, p2)
                     setEditingMatch(null)
                   }}
                   className="px-5 py-2.5 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-xs transition-all shadow-md shadow-green-500/20"

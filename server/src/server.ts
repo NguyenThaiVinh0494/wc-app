@@ -57,9 +57,13 @@ app.put('/api/matches/:id', async (req, res) => {
       
       const s1 = score1 !== null ? Number(score1) : null
       const s2 = score2 !== null ? Number(score2) : null
+      const p1 = req.body.homePenalty !== null && req.body.homePenalty !== undefined ? Number(req.body.homePenalty) : null
+      const p2 = req.body.awayPenalty !== null && req.body.awayPenalty !== undefined ? Number(req.body.awayPenalty) : null
       
       db.knockout.matches[matchIndex].score1 = s1
       db.knockout.matches[matchIndex].score2 = s2
+      db.knockout.matches[matchIndex].homePenalty = p1
+      db.knockout.matches[matchIndex].awayPenalty = p2
 
       // Automatically determine winner if score is decisive
       if (s1 !== null && s2 !== null) {
@@ -67,6 +71,15 @@ app.put('/api/matches/:id', async (req, res) => {
           db.knockout.winners[id] = 1
         } else if (s2 > s1) {
           db.knockout.winners[id] = 2
+        } else {
+          // Went to penalties: check penalty scores
+          if (p1 !== null && p2 !== null) {
+            if (p1 > p2) {
+              db.knockout.winners[id] = 1
+            } else if (p2 > p1) {
+              db.knockout.winners[id] = 2
+            }
+          }
         }
       } else {
         db.knockout.winners[id] = null
@@ -372,6 +385,8 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
         const isNotStarted = apiG.time_elapsed === 'notstarted'
         const nextScore1 = isNotStarted ? null : homeScore
         const nextScore2 = isNotStarted ? null : awayScore
+        const nextHomePenalty = isNotStarted ? null : (apiG.home_penalty_score !== null && apiG.home_penalty_score !== undefined && apiG.home_penalty_score !== 'null' ? Number(apiG.home_penalty_score) : null)
+        const nextAwayPenalty = isNotStarted ? null : (apiG.away_penalty_score !== null && apiG.away_penalty_score !== undefined && apiG.away_penalty_score !== 'null' ? Number(apiG.away_penalty_score) : null)
 
         const nextHomeScorers = apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null
         const nextAwayScorers = apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null
@@ -384,7 +399,9 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
           match.score2 !== nextScore2 ||
           match.homeScorers !== nextHomeScorers ||
           match.awayScorers !== nextAwayScorers ||
-          match.stadiumId !== nextStadiumId
+          match.stadiumId !== nextStadiumId ||
+          match.homePenalty !== nextHomePenalty ||
+          match.awayPenalty !== nextAwayPenalty
         ) {
           match.team1 = nextTeam1
           match.team2 = nextTeam2
@@ -393,6 +410,8 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
           match.homeScorers = nextHomeScorers
           match.awayScorers = nextAwayScorers
           match.stadiumId = nextStadiumId
+          match.homePenalty = nextHomePenalty
+          match.awayPenalty = nextAwayPenalty
           updatedCount++
         }
 
@@ -420,21 +439,32 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
             } else if (nextScore2 > nextScore1) {
               winnerSlot = 2
             } else {
-              // Went to penalties: lookup next match to see who advanced
-              const nextGameInApi = apiGames.find((g: any) => 
-                g.home_team_label === `Winner Match ${apiG.id}` || 
-                g.away_team_label === `Winner Match ${apiG.id}`
-              )
-              if (nextGameInApi) {
-                const advancedTeamEng = nextGameInApi.home_team_label === `Winner Match ${apiG.id}` 
-                  ? nextGameInApi.home_team_name_en 
-                  : nextGameInApi.away_team_name_en
-                
-                if (advancedTeamEng) {
-                  if (advancedTeamEng === hEng) {
-                    winnerSlot = 1
-                  } else if (advancedTeamEng === aEng) {
-                    winnerSlot = 2
+              // Went to penalties: check penalty scores first
+              if (nextHomePenalty !== null && nextAwayPenalty !== null) {
+                if (nextHomePenalty > nextAwayPenalty) {
+                  winnerSlot = 1
+                } else if (nextAwayPenalty > nextHomePenalty) {
+                  winnerSlot = 2
+                }
+              }
+              
+              if (winnerSlot === null) {
+                // Fallback to next match lookup if penalty scores are missing/tied
+                const nextGameInApi = apiGames.find((g: any) => 
+                  g.home_team_label === `Winner Match ${apiG.id}` || 
+                  g.away_team_label === `Winner Match ${apiG.id}`
+                )
+                if (nextGameInApi) {
+                  const advancedTeamEng = nextGameInApi.home_team_label === `Winner Match ${apiG.id}` 
+                    ? nextGameInApi.home_team_name_en 
+                    : nextGameInApi.away_team_name_en
+                  
+                  if (advancedTeamEng) {
+                    if (advancedTeamEng === hEng) {
+                      winnerSlot = 1
+                    } else if (advancedTeamEng === aEng) {
+                      winnerSlot = 2
+                    }
                   }
                 }
               }

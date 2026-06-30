@@ -74,11 +74,15 @@ export default function App(): JSX.Element {
   
   const [modalScore1, setModalScore1] = useState<string>('')
   const [modalScore2, setModalScore2] = useState<string>('')
+  const [modalPenalty1, setModalPenalty1] = useState<string>('')
+  const [modalPenalty2, setModalPenalty2] = useState<string>('')
 
   useEffect(() => {
     if (editingMatch) {
       setModalScore1(editingMatch.score1 !== null ? String(editingMatch.score1) : '')
       setModalScore2(editingMatch.score2 !== null ? String(editingMatch.score2) : '')
+      setModalPenalty1(editingMatch.homePenalty !== null && editingMatch.homePenalty !== undefined ? String(editingMatch.homePenalty) : '')
+      setModalPenalty2(editingMatch.awayPenalty !== null && editingMatch.awayPenalty !== undefined ? String(editingMatch.awayPenalty) : '')
     }
   }, [editingMatch])
 
@@ -433,7 +437,13 @@ export default function App(): JSX.Element {
     })
   }
 
-  const handleSaveScore = (matchId: string, s1: number | null, s2: number | null) => {
+  const handleSaveScore = (
+    matchId: string, 
+    s1: number | null, 
+    s2: number | null, 
+    p1: number | null = null, 
+    p2: number | null = null
+  ) => {
     if (matchId.startsWith('gm')) {
       setGroupMatches(prev => {
         const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2 } : m)
@@ -442,7 +452,7 @@ export default function App(): JSX.Element {
       })
     } else {
       setKnockoutMatches(prev => {
-        const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2 } : m)
+        const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2, homePenalty: p1, awayPenalty: p2 } : m)
         localStorage.setItem('wc2026_knockoutMatches', JSON.stringify(next))
         return next
       })
@@ -452,6 +462,13 @@ export default function App(): JSX.Element {
           let nextVal = prev[matchId]
           if (s1 > s2) nextVal = 1
           else if (s2 > s1) nextVal = 2
+          else {
+            // Went to penalties
+            if (p1 !== null && p2 !== null) {
+              if (p1 > p2) nextVal = 1
+              else if (p2 > p1) nextVal = 2
+            }
+          }
           const next = { ...prev, [matchId]: nextVal }
           localStorage.setItem('wc2026_winners', JSON.stringify(next))
           return next
@@ -468,7 +485,7 @@ export default function App(): JSX.Element {
     fetch(`/api/matches/${matchId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ score1: s1, score2: s2 })
+      body: JSON.stringify({ score1: s1, score2: s2, homePenalty: p1, awayPenalty: p2 })
     })
     .then(res => res.json())
     .then(data => {
@@ -476,6 +493,10 @@ export default function App(): JSX.Element {
         if (data.knockout.winners) {
           setWinners(data.knockout.winners)
           localStorage.setItem('wc2026_winners', JSON.stringify(data.knockout.winners))
+        }
+        if (data.knockout.matches) {
+          setKnockoutMatches(data.knockout.matches)
+          localStorage.setItem('wc2026_knockoutMatches', JSON.stringify(data.knockout.matches))
         }
       }
     })
@@ -816,6 +837,10 @@ export default function App(): JSX.Element {
           setModalScore1={setModalScore1}
           modalScore2={modalScore2}
           setModalScore2={setModalScore2}
+          modalPenalty1={modalPenalty1}
+          setModalPenalty1={setModalPenalty1}
+          modalPenalty2={modalPenalty2}
+          setModalPenalty2={setModalPenalty2}
           role={role}
           handleSaveScore={handleSaveScore}
         />

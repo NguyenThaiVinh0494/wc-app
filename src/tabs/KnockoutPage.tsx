@@ -34,6 +34,24 @@ export const KnockoutPage: React.FC<KnockoutPageProps> = ({
   handleBaseTeamChange,
   handlePersistKnockoutBaseTeams
 }) => {
+  const renderMatchBox = (id: string) => {
+    const m = knockoutMatches.find(match => match.id === id)
+    return (
+      <MatchBox 
+        key={id} 
+        matchId={id} 
+        getTeamForMatch={getTeamForMatch}
+        winners={winners}
+        role={role}
+        handleWinnerSelect={handleWinnerSelect}
+        baseTeams={baseTeams}
+        handleBaseTeamChange={handleBaseTeamChange}
+        handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
+        match={m}
+      />
+    )
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto px-4 md:px-8 animate-slide-up">
       <div className="mb-8 text-center flex flex-col items-center">
@@ -84,156 +102,42 @@ export const KnockoutPage: React.FC<KnockoutPageProps> = ({
             <div className="min-w-[1400px] flex justify-between gap-4 py-4 relative" id="bracket-container">
               <BracketLines winners={winners} />
               <div className="flex flex-col justify-around gap-2 w-36 animate-ko-slide-left">
-                {LAYOUT.col1.map(id => (
-                  <MatchBox 
-                    key={id} 
-                    matchId={id} 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
-                ))}
+                {LAYOUT.col1.map(renderMatchBox)}
               </div>
               <div className="flex flex-col justify-around gap-2 w-36 py-8 animate-ko-slide-left delay-200">
-                {LAYOUT.col2.map(id => (
-                  <MatchBox 
-                    key={id} 
-                    matchId={id} 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
-                ))}
+                {LAYOUT.col2.map(renderMatchBox)}
               </div>
               <div className="flex flex-col justify-around gap-2 w-36 py-24 animate-ko-slide-left delay-400">
-                {LAYOUT.col3.map(id => (
-                  <MatchBox 
-                    key={id} 
-                    matchId={id} 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
-                ))}
+                {LAYOUT.col3.map(renderMatchBox)}
               </div>
               <div className="flex flex-col justify-around gap-2 w-36 py-48 animate-ko-slide-left delay-600">
-                {LAYOUT.col4.map(id => (
-                  <MatchBox 
-                    key={id} 
-                    matchId={id} 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
-                ))}
+                {LAYOUT.col4.map(renderMatchBox)}
               </div>
 
               <div className="flex flex-col justify-center items-center gap-12 w-48 relative animate-ko-pop-center delay-800">
                 <div className="flex flex-col items-center">
-                  <MatchBox 
-                    matchId="m31" 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
+                  {renderMatchBox('m31')}
                 </div>
                 <div className="text-6xl drop-shadow-[0_0_30px_rgba(250,204,21,0.8)] animate-pulse my-4">🏆</div>
                 <div className="flex flex-col items-center transform scale-110">
                   <div className="absolute inset-0 bg-yellow-500/20 blur-xl rounded-full"></div>
                   <div className="relative z-10">
-                    <MatchBox 
-                      matchId="m32" 
-                      getTeamForMatch={getTeamForMatch}
-                      winners={winners}
-                      role={role}
-                      handleWinnerSelect={handleWinnerSelect}
-                      baseTeams={baseTeams}
-                      handleBaseTeamChange={handleBaseTeamChange}
-                      handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                    />
+                    {renderMatchBox('m32')}
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-col justify-around gap-2 w-36 py-48 animate-ko-slide-right delay-600">
-                {LAYOUT.col6.map(id => (
-                  <MatchBox 
-                    key={id} 
-                    matchId={id} 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
-                ))}
+                {LAYOUT.col6.map(renderMatchBox)}
               </div>
               <div className="flex flex-col justify-around gap-2 w-36 py-24 animate-ko-slide-right delay-400">
-                {LAYOUT.col7.map(id => (
-                  <MatchBox 
-                    key={id} 
-                    matchId={id} 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
-                ))}
+                {LAYOUT.col7.map(renderMatchBox)}
               </div>
               <div className="flex flex-col justify-around gap-2 w-36 py-8 animate-ko-slide-right delay-200">
-                {LAYOUT.col8.map(id => (
-                  <MatchBox 
-                    key={id} 
-                    matchId={id} 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
-                ))}
+                {LAYOUT.col8.map(renderMatchBox)}
               </div>
               <div className="flex flex-col justify-around gap-2 w-36 animate-ko-slide-right">
-                {LAYOUT.col9.map(id => (
-                  <MatchBox 
-                    key={id} 
-                    matchId={id} 
-                    getTeamForMatch={getTeamForMatch}
-                    winners={winners}
-                    role={role}
-                    handleWinnerSelect={handleWinnerSelect}
-                    baseTeams={baseTeams}
-                    handleBaseTeamChange={handleBaseTeamChange}
-                    handlePersistKnockoutBaseTeams={handlePersistKnockoutBaseTeams}
-                  />
-                ))}
+                {LAYOUT.col9.map(renderMatchBox)}
               </div>
             </div>
           </div>
@@ -276,8 +180,17 @@ export const KnockoutPage: React.FC<KnockoutPageProps> = ({
                         {renderFlag(t1Name, t1Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
                       </div>
 
-                      <div className="w-8 h-8 rounded-full bg-white text-black font-black flex items-center justify-center text-[9px] shadow-md shrink-0 mx-1 select-none">
-                        {hasScore ? `${match.score1}-${match.score2}` : match.time}
+                      <div className="flex flex-col items-center justify-center min-w-[3rem] h-8 rounded-full bg-white text-black font-black text-[9px] shadow-md shrink-0 mx-1 px-1.5 select-none leading-tight">
+                        {hasScore ? (
+                          <>
+                            <span>{match.score1}-{match.score2}</span>
+                            {match.homePenalty !== null && match.awayPenalty !== null && (
+                              <span className="text-[7px] text-gray-500 font-medium">({match.homePenalty}-{match.awayPenalty} p)</span>
+                            )}
+                          </>
+                        ) : (
+                          <span>{match.time}</span>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1.5 w-[42%] justify-start text-left">

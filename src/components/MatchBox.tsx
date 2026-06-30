@@ -1,5 +1,6 @@
 import React from 'react'
 import { getMatchColor, getMatchTitle } from '../utils/helpers'
+import { GroupMatch } from '../types'
 
 interface MatchBoxProps {
   matchId: string
@@ -10,6 +11,7 @@ interface MatchBoxProps {
   baseTeams: { [k: string]: string }
   handleBaseTeamChange: (matchId: string, slot: number, value: string) => void
   handlePersistKnockoutBaseTeams: (nextBaseTeams: { [k: string]: string }) => void
+  match?: GroupMatch
 }
 
 export const MatchBox: React.FC<MatchBoxProps> = ({
@@ -20,8 +22,13 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
   handleWinnerSelect,
   baseTeams,
   handleBaseTeamChange,
-  handlePersistKnockoutBaseTeams
+  handlePersistKnockoutBaseTeams,
+  match
 }) => {
+  const score1 = match?.score1 ?? null
+  const score2 = match?.score2 ?? null
+  const homePenalty = match?.homePenalty ?? null
+  const awayPenalty = match?.awayPenalty ?? null
   const t1 = getTeamForMatch(matchId, 1)
   const t2 = getTeamForMatch(matchId, 2)
   const winner = winners[matchId]
@@ -29,6 +36,9 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
   const colorClass = getMatchColor(matchId)
   const title = getMatchTitle(matchId)
   const isAdmin = role === 'admin'
+
+  const hasScore = score1 !== null && score2 !== null
+  const hasPenalties = homePenalty !== null && awayPenalty !== null
 
   return (
     <div data-match-id={matchId} className={`w-36 rounded overflow-hidden border ${colorClass} shadow-lg text-xs transition-all duration-300 hover:scale-105`}>
@@ -48,7 +58,17 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
             placeholder="Đội..." 
           />
         ) : (
-          <span className="truncate w-full block">{t1 || '-'}</span>
+          <div className="flex items-center justify-between w-full">
+            <span className="truncate pr-1">{t1 || '-'}</span>
+            {hasScore && (
+              <span className="font-bold flex items-center shrink-0">
+                {score1}
+                {hasPenalties && (
+                  <span className="text-[9px] opacity-80 font-normal ml-0.5">({homePenalty})</span>
+                )}
+              </span>
+            )}
+          </div>
         )}
       </div>
 
@@ -66,7 +86,17 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
             placeholder="Đội..." 
           />
         ) : (
-          <span className="truncate w-full block">{t2 || '-'}</span>
+          <div className="flex items-center justify-between w-full">
+            <span className="truncate pr-1">{t2 || '-'}</span>
+            {hasScore && (
+              <span className="font-bold flex items-center shrink-0">
+                {score2}
+                {hasPenalties && (
+                  <span className="text-[9px] opacity-80 font-normal ml-0.5">({awayPenalty})</span>
+                )}
+              </span>
+            )}
+          </div>
         )}
       </div>
     </div>
