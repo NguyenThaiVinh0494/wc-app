@@ -74,7 +74,7 @@ export default function App(): JSX.Element {
     if (baseSaved) {
       try {
         const parsedBase = JSON.parse(baseSaved)
-        if (parsedBase.m8_t1 === 'Nhất Bảng G' || parsedBase.m8_t1 === 'Nhất Bảng L' || parsedBase.m8_t1 === 'Anh' || parsedBase.m8_t1 === 'England') {
+        if (parsedBase.m8_t1 === 'Nhất Bảng G' || parsedBase.m8_t1 === 'Nhất Bảng L' || parsedBase.m8_t1 === 'England' || parsedBase.m8_t1 === 'Belgium') {
           localStorage.removeItem('wc2026_knockoutMatches')
           localStorage.removeItem('wc2026_baseTeams')
           localStorage.removeItem('wc2026_winners')

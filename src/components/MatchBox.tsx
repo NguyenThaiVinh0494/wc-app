@@ -48,7 +48,7 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
         onClick={() => isAdmin && handleWinnerSelect(matchId, 1)} 
         className={`px-2 py-2 flex items-center border-b border-black/5 transition-colors ${winner === 1 ? 'bg-green-600 font-bold text-white' : 'text-slate-700'} ${winner === 2 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-black/5' : ''}`}
       >
-        {isR32 && isAdmin ? (
+        {isR32 && isAdmin && !hasScore ? (
           <input 
             value={t1} 
             onChange={(e) => handleBaseTeamChange(matchId, 1, e.target.value)} 
@@ -76,7 +76,7 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
         onClick={() => isAdmin && handleWinnerSelect(matchId, 2)} 
         className={`px-2 py-2 flex items-center transition-colors ${winner === 2 ? 'bg-green-600 font-bold text-white' : 'text-slate-700'} ${winner === 1 ? 'opacity-40' : ''} ${isAdmin ? 'cursor-pointer hover:bg-black/5' : ''}`}
       >
-        {isR32 && isAdmin ? (
+        {isR32 && isAdmin && !hasScore ? (
           <input 
             value={t2} 
             onChange={(e) => handleBaseTeamChange(matchId, 2, e.target.value)} 

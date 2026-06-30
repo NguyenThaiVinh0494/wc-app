@@ -67,17 +67,17 @@ function migrateKnockoutMatches(db: any): boolean {
       const m8 = db.knockout.matches.find((m: any) => m.id === 'm8')
       const m10 = db.knockout.matches.find((m: any) => m.id === 'm10')
       
-      if (m8 && (m8.team1 === 'England' || m8.team1 === 'Anh' || m8.stadiumId === '7')) {
+      if (m8 && (m8.team1 === 'England' || m8.team1 === 'Anh' || m8.team1 === 'Belgium' || m8.team1 === 'Nhất Bảng G' || m8.stadiumId === '7')) {
         m8.stadiumId = '14'
-        m8.team1 = 'Belgium'
+        m8.team1 = 'Bỉ'
         m8.team2 = 'Senegal'
         changed = true
       }
       
-      if (m10 && (m10.team1 === 'Winner Group G' || m10.team1 === 'Bỉ' || m10.stadiumId === '14')) {
+      if (m10 && (m10.team1 === 'Winner Group G' || m10.team1 === 'Bỉ' || m10.team1 === 'England' || m10.team1 === 'Nhất Bảng L' || m10.stadiumId === '14')) {
         m10.stadiumId = '7'
-        m10.team1 = 'England'
-        m10.team2 = 'DR Congo'
+        m10.team1 = 'Anh'
+        m10.team2 = 'CHDC Congo'
         changed = true
       }
 
@@ -98,11 +98,11 @@ function migrateKnockoutMatches(db: any): boolean {
     
     if (db.knockout.baseTeams) {
       const b = db.knockout.baseTeams
-      if (b.m8_t1 === 'Nhất Bảng G' || b.m8_t1 === 'Bỉ' || b.m8_t1 === 'Nhất Bảng L' || b.m8_t1 === 'Anh' || b.m8_t1 === 'England') {
-        b.m8_t1 = 'Belgium'
+      if (b.m8_t1 === 'Nhất Bảng G' || b.m8_t1 === 'Nhất Bảng L' || b.m8_t1 === 'England' || b.m8_t1 === 'Belgium') {
+        b.m8_t1 = 'Bỉ'
         b.m8_t2 = 'Senegal'
-        b.m10_t1 = 'England'
-        b.m10_t2 = 'DR Congo'
+        b.m10_t1 = 'Anh'
+        b.m10_t2 = 'CHDC Congo'
         changed = true
       }
     }
