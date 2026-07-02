@@ -18,8 +18,22 @@ interface MatchModalProps {
   setModalIsExtraTime: (val: boolean) => void
   modalStatus: 'notstarted' | 'live' | 'finished'
   setModalStatus: (val: 'notstarted' | 'live' | 'finished') => void
+  modalHomeScorers: string
+  setModalHomeScorers: (val: string) => void
+  modalAwayScorers: string
+  setModalAwayScorers: (val: string) => void
   role: 'admin' | 'guest' | null
-  handleSaveScore: (matchId: string, s1: number | null, s2: number | null, p1: number | null, p2: number | null, isExtraTime: boolean | null, status: 'notstarted' | 'live' | 'finished' | null) => void
+  handleSaveScore: (
+    matchId: string, 
+    s1: number | null, 
+    s2: number | null, 
+    p1: number | null, 
+    p2: number | null, 
+    isExtraTime: boolean | null, 
+    status: 'notstarted' | 'live' | 'finished' | null,
+    homeScorers: string | null,
+    awayScorers: string | null
+  ) => void
 }
 
 export const MatchModal: React.FC<MatchModalProps> = ({
@@ -37,6 +51,10 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   setModalIsExtraTime,
   modalStatus,
   setModalStatus,
+  modalHomeScorers,
+  setModalHomeScorers,
+  modalAwayScorers,
+  setModalAwayScorers,
   role,
   handleSaveScore
 }) => {
@@ -94,10 +112,23 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                 <span className="text-4xl font-black text-white mt-1">{editingMatch.score1 !== null ? editingMatch.score1 : '-'}</span>
               )}
 
-              {homeScorersList.length > 0 && (
-                <div className="text-xs text-gray-400 mt-2 font-medium bg-black/25 py-1.5 px-3 rounded-lg w-full text-center">
-                  {homeScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
+              {isAdmin ? (
+                <div className="flex flex-col gap-1 w-full text-left mt-2">
+                  <span className="text-[9px] uppercase font-bold text-gray-400">Cầu thủ ghi bàn</span>
+                  <input
+                    type="text"
+                    placeholder="Cầu thủ ghi bàn..."
+                    value={modalHomeScorers}
+                    onChange={(e) => setModalHomeScorers(e.target.value)}
+                    className="w-full bg-[#131424] border border-gray-750 rounded px-2 py-1 text-[10px] text-gray-200 outline-none focus:border-green-500 font-medium text-center"
+                  />
                 </div>
+              ) : (
+                homeScorersList.length > 0 && (
+                  <div className="text-xs text-gray-400 mt-2 font-medium bg-black/25 py-1.5 px-3 rounded-lg w-full text-center">
+                    {homeScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
+                  </div>
+                )
               )}
             </div>
 
@@ -119,10 +150,23 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                 <span className="text-4xl font-black text-white mt-1">{editingMatch.score2 !== null ? editingMatch.score2 : '-'}</span>
               )}
 
-              {awayScorersList.length > 0 && (
-                <div className="text-xs text-gray-400 mt-2 font-medium bg-black/25 py-1.5 px-3 rounded-lg w-full text-center">
-                  {awayScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
+              {isAdmin ? (
+                <div className="flex flex-col gap-1 w-full text-left mt-2">
+                  <span className="text-[9px] uppercase font-bold text-gray-400">Cầu thủ ghi bàn</span>
+                  <input
+                    type="text"
+                    placeholder="Cầu thủ ghi bàn..."
+                    value={modalAwayScorers}
+                    onChange={(e) => setModalAwayScorers(e.target.value)}
+                    className="w-full bg-[#131424] border border-gray-750 rounded px-2 py-1 text-[10px] text-gray-200 outline-none focus:border-green-500 font-medium text-center"
+                  />
                 </div>
+              ) : (
+                awayScorersList.length > 0 && (
+                  <div className="text-xs text-gray-400 mt-2 font-medium bg-black/25 py-1.5 px-3 rounded-lg w-full text-center">
+                    {awayScorersList.map((s, idx) => <div key={idx} className="truncate">⚽ {s}</div>)}
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -221,11 +265,11 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                 <span className="text-[10px] uppercase font-bold text-gray-400">Trạng thái</span>
                 <span className={`text-xs font-black uppercase px-3 py-1 rounded-full ${
                   editingMatch.status === 'live' ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse' :
-                  editingMatch.status === 'finished' ? 'bg-gray-500/20 text-gray-400 border border-gray-500/30' :
+                  (editingMatch.status === 'finished' || (editingMatch.score1 !== null && editingMatch.score2 !== null)) ? 'bg-gray-500/20 text-gray-400 border border-gray-500/30' :
                   'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                 }`}>
                   {editingMatch.status === 'live' ? '• Đang diễn ra' :
-                   editingMatch.status === 'finished' ? 'Đã kết thúc' :
+                   (editingMatch.status === 'finished' || (editingMatch.score1 !== null && editingMatch.score2 !== null)) ? 'Đã kết thúc' :
                    'Sắp diễn ra'}
                 </span>
               </div>
@@ -245,7 +289,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
               <>
                 <button
                   onClick={() => {
-                    handleSaveScore(editingMatch.id, null, null, null, null, null, 'notstarted')
+                    handleSaveScore(editingMatch.id, null, null, null, null, null, 'notstarted', null, null)
                     setEditingMatch(null)
                   }}
                   className="px-4 py-2.5 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-xs font-bold transition-all"
@@ -265,7 +309,17 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                     const s2 = isNotStarted || modalScore2 === '' ? null : Number(modalScore2)
                     const p1 = isNotStarted || modalPenalty1 === '' ? null : Number(modalPenalty1)
                     const p2 = isNotStarted || modalPenalty2 === '' ? null : Number(modalPenalty2)
-                    handleSaveScore(editingMatch.id, s1, s2, p1, p2, isTie ? true : modalIsExtraTime, modalStatus)
+                    handleSaveScore(
+                      editingMatch.id, 
+                      s1, 
+                      s2, 
+                      p1, 
+                      p2, 
+                      isTie ? true : modalIsExtraTime, 
+                      modalStatus, 
+                      isNotStarted ? null : modalHomeScorers, 
+                      isNotStarted ? null : modalAwayScorers
+                    )
                     setEditingMatch(null)
                   }}
                   className="px-5 py-2.5 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-xs transition-all shadow-md shadow-green-500/20"

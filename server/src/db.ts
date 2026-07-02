@@ -109,6 +109,24 @@ function migrateKnockoutMatches(db: any): boolean {
         changed = true
       }
     }
+
+    // Migrate old records: if match has scores but no status, set status to 'finished'
+    if (db.matches) {
+      db.matches.forEach((m: any) => {
+        if (m.score1 !== null && m.score2 !== null && !m.status) {
+          m.status = 'finished'
+          changed = true
+        }
+      })
+    }
+    if (db.knockout && db.knockout.matches) {
+      db.knockout.matches.forEach((m: any) => {
+        if (m.score1 !== null && m.score2 !== null && !m.status) {
+          m.status = 'finished'
+          changed = true
+        }
+      })
+    }
   }
   return changed
 }

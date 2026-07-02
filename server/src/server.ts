@@ -44,6 +44,12 @@ app.put('/api/matches/:id', async (req, res) => {
       }
       db.matches[matchIndex].score1 = score1 !== null ? Number(score1) : null
       db.matches[matchIndex].score2 = score2 !== null ? Number(score2) : null
+      if (req.body.homeScorers !== undefined) {
+        db.matches[matchIndex].homeScorers = req.body.homeScorers
+      }
+      if (req.body.awayScorers !== undefined) {
+        db.matches[matchIndex].awayScorers = req.body.awayScorers
+      }
       await writeDb(db)
       res.json({ success: true, match: db.matches[matchIndex] })
     } else {
@@ -66,6 +72,12 @@ app.put('/api/matches/:id', async (req, res) => {
       db.knockout.matches[matchIndex].homePenalty = p1
       db.knockout.matches[matchIndex].awayPenalty = p2
       db.knockout.matches[matchIndex].isExtraTime = isExtraTime
+      if (req.body.homeScorers !== undefined) {
+        db.knockout.matches[matchIndex].homeScorers = req.body.homeScorers
+      }
+      if (req.body.awayScorers !== undefined) {
+        db.knockout.matches[matchIndex].awayScorers = req.body.awayScorers
+      }
 
       // Automatically determine winner if score is decisive
       if (s1 !== null && s2 !== null) {
@@ -341,8 +353,12 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
         const nextScore1 = isNotStarted ? null : (isHomeTeam1 ? homeScore : awayScore)
         const nextScore2 = isNotStarted ? null : (isHomeTeam1 ? awayScore : homeScore)
 
-        const nextHomeScorers = apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null
-        const nextAwayScorers = apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null
+        const nextHomeScorers = (match.score1 === nextScore1 && match.homeScorers)
+          ? match.homeScorers
+          : (apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null)
+        const nextAwayScorers = (match.score2 === nextScore2 && match.awayScorers)
+          ? match.awayScorers
+          : (apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null)
         const nextStadiumId = apiG.stadium_id ? String(apiG.stadium_id) : null
 
         if (
@@ -397,8 +413,12 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
           (nextHomePenalty !== null && nextAwayPenalty !== null)
         )
 
-        const nextHomeScorers = apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null
-        const nextAwayScorers = apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null
+        const nextHomeScorers = (match.score1 === nextScore1 && match.homeScorers)
+          ? match.homeScorers
+          : (apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null)
+        const nextAwayScorers = (match.score2 === nextScore2 && match.awayScorers)
+          ? match.awayScorers
+          : (apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null)
         const nextStadiumId = apiG.stadium_id ? String(apiG.stadium_id) : null
 
         if (

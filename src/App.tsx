@@ -119,6 +119,8 @@ export default function App(): JSX.Element {
   const [modalPenalty2, setModalPenalty2] = useState<string>('')
   const [modalIsExtraTime, setModalIsExtraTime] = useState<boolean>(false)
   const [modalStatus, setModalStatus] = useState<'notstarted' | 'live' | 'finished'>('notstarted')
+  const [modalHomeScorers, setModalHomeScorers] = useState<string>('')
+  const [modalAwayScorers, setModalAwayScorers] = useState<string>('')
 
   useEffect(() => {
     if (editingMatch) {
@@ -128,6 +130,8 @@ export default function App(): JSX.Element {
       setModalPenalty2(editingMatch.awayPenalty !== null && editingMatch.awayPenalty !== undefined ? String(editingMatch.awayPenalty) : '')
       setModalIsExtraTime(editingMatch.isExtraTime || false)
       setModalStatus(editingMatch.status || (editingMatch.score1 !== null && editingMatch.score2 !== null ? 'finished' : 'notstarted'))
+      setModalHomeScorers(editingMatch.homeScorers || '')
+      setModalAwayScorers(editingMatch.awayScorers || '')
     }
   }, [editingMatch])
 
@@ -500,17 +504,37 @@ export default function App(): JSX.Element {
     s2: number | null, 
     p1: number | null = null, 
     p2: number | null = null,
-    isExtraTime: boolean | null = null
+    isExtraTime: boolean | null = null,
+    status: 'notstarted' | 'live' | 'finished' | null = null,
+    homeScorers: string | null = null,
+    awayScorers: string | null = null
   ) => {
     if (matchId.startsWith('gm')) {
       setGroupMatches(prev => {
-        const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2 } : m)
+        const next = prev.map(m => m.id === matchId ? { 
+          ...m, 
+          score1: s1, 
+          score2: s2,
+          status: status,
+          homeScorers: homeScorers,
+          awayScorers: awayScorers
+        } : m)
         localStorage.setItem('wc2026_groupMatches', JSON.stringify(next))
         return next
       })
     } else {
       setKnockoutMatches(prev => {
-        const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2, homePenalty: p1, awayPenalty: p2, isExtraTime: isExtraTime } : m)
+        const next = prev.map(m => m.id === matchId ? { 
+          ...m, 
+          score1: s1, 
+          score2: s2, 
+          homePenalty: p1, 
+          awayPenalty: p2, 
+          isExtraTime: isExtraTime,
+          status: status,
+          homeScorers: homeScorers,
+          awayScorers: awayScorers
+        } : m)
         localStorage.setItem('wc2026_knockoutMatches', JSON.stringify(next))
         return next
       })
@@ -543,7 +567,16 @@ export default function App(): JSX.Element {
     fetch(`/api/matches/${matchId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ score1: s1, score2: s2, homePenalty: p1, awayPenalty: p2, isExtraTime: isExtraTime })
+      body: JSON.stringify({ 
+        score1: s1, 
+        score2: s2, 
+        homePenalty: p1, 
+        awayPenalty: p2, 
+        isExtraTime: isExtraTime,
+        status: status,
+        homeScorers: homeScorers,
+        awayScorers: awayScorers
+      })
     })
     .then(res => res.json())
     .then(data => {
@@ -930,6 +963,10 @@ export default function App(): JSX.Element {
           setModalIsExtraTime={setModalIsExtraTime}
           modalStatus={modalStatus}
           setModalStatus={setModalStatus}
+          modalHomeScorers={modalHomeScorers}
+          setModalHomeScorers={setModalHomeScorers}
+          modalAwayScorers={modalAwayScorers}
+          setModalAwayScorers={setModalAwayScorers}
           role={role}
           handleSaveScore={handleSaveScore}
         />
