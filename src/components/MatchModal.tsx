@@ -16,8 +16,10 @@ interface MatchModalProps {
   setModalPenalty2: (val: string) => void
   modalIsExtraTime: boolean
   setModalIsExtraTime: (val: boolean) => void
+  modalStatus: 'notstarted' | 'live' | 'finished'
+  setModalStatus: (val: 'notstarted' | 'live' | 'finished') => void
   role: 'admin' | 'guest' | null
-  handleSaveScore: (matchId: string, s1: number | null, s2: number | null, p1: number | null, p2: number | null, isExtraTime: boolean | null) => void
+  handleSaveScore: (matchId: string, s1: number | null, s2: number | null, p1: number | null, p2: number | null, isExtraTime: boolean | null, status: 'notstarted' | 'live' | 'finished' | null) => void
 }
 
 export const MatchModal: React.FC<MatchModalProps> = ({
@@ -33,6 +35,8 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   setModalPenalty2,
   modalIsExtraTime,
   setModalIsExtraTime,
+  modalStatus,
+  setModalStatus,
   role,
   handleSaveScore
 }) => {
@@ -187,6 +191,47 @@ export const MatchModal: React.FC<MatchModalProps> = ({
             </div>
           )}
 
+          {/* Match Status Dropdown (Admin) or status badge (Guest) */}
+          <div className="border-t border-white/5 pt-4 mt-2 flex flex-col gap-1 text-center items-center justify-center">
+            {isAdmin ? (
+              <div className="flex flex-col gap-1.5 w-48 text-left">
+                <span className="text-[10px] uppercase font-bold text-gray-400">Trạng thái trận đấu</span>
+                <select
+                  value={modalStatus}
+                  onChange={(e) => {
+                    const val = e.target.value as any
+                    setModalStatus(val)
+                    if (val === 'notstarted') {
+                      setModalScore1('')
+                      setModalScore2('')
+                      setModalPenalty1('')
+                      setModalPenalty2('')
+                      setModalIsExtraTime(false)
+                    }
+                  }}
+                  className="bg-[#131424] border border-gray-700 text-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-500 text-xs font-bold cursor-pointer"
+                >
+                  <option value="notstarted">⏱ Sắp diễn ra</option>
+                  <option value="live">⚽ Đang diễn ra</option>
+                  <option value="finished">🏁 Đã kết thúc</option>
+                </select>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5 items-center justify-center">
+                <span className="text-[10px] uppercase font-bold text-gray-400">Trạng thái</span>
+                <span className={`text-xs font-black uppercase px-3 py-1 rounded-full ${
+                  editingMatch.status === 'live' ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse' :
+                  editingMatch.status === 'finished' ? 'bg-gray-500/20 text-gray-400 border border-gray-500/30' :
+                  'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                }`}>
+                  {editingMatch.status === 'live' ? '• Đang diễn ra' :
+                   editingMatch.status === 'finished' ? 'Đã kết thúc' :
+                   'Sắp diễn ra'}
+                </span>
+              </div>
+            )}
+          </div>
+
           {stadium && (
             <div className="border-t border-white/5 pt-4 mt-2 flex flex-col gap-1 text-center">
               <span className="text-xs uppercase font-bold text-gray-400">Sân vận động</span>
@@ -200,7 +245,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
               <>
                 <button
                   onClick={() => {
-                    handleSaveScore(editingMatch.id, null, null, null, null, null)
+                    handleSaveScore(editingMatch.id, null, null, null, null, null, 'notstarted')
                     setEditingMatch(null)
                   }}
                   className="px-4 py-2.5 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-xs font-bold transition-all"
@@ -215,11 +260,12 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    const s1 = modalScore1 === '' ? null : Number(modalScore1)
-                    const s2 = modalScore2 === '' ? null : Number(modalScore2)
-                    const p1 = modalPenalty1 === '' ? null : Number(modalPenalty1)
-                    const p2 = modalPenalty2 === '' ? null : Number(modalPenalty2)
-                    handleSaveScore(editingMatch.id, s1, s2, p1, p2, isTie ? true : modalIsExtraTime)
+                    const isNotStarted = modalStatus === 'notstarted'
+                    const s1 = isNotStarted || modalScore1 === '' ? null : Number(modalScore1)
+                    const s2 = isNotStarted || modalScore2 === '' ? null : Number(modalScore2)
+                    const p1 = isNotStarted || modalPenalty1 === '' ? null : Number(modalPenalty1)
+                    const p2 = isNotStarted || modalPenalty2 === '' ? null : Number(modalPenalty2)
+                    handleSaveScore(editingMatch.id, s1, s2, p1, p2, isTie ? true : modalIsExtraTime, modalStatus)
                     setEditingMatch(null)
                   }}
                   className="px-5 py-2.5 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-xs transition-all shadow-md shadow-green-500/20"

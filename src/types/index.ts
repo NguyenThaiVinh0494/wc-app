@@ -24,6 +24,7 @@ export interface GroupMatch {
   homePenalty?: number | null
   awayPenalty?: number | null
   isExtraTime?: boolean | null
+  status?: 'notstarted' | 'live' | 'finished' | null
 }
 
 export interface GroupedMatches {

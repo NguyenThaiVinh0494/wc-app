@@ -180,10 +180,19 @@ export const KnockoutPage: React.FC<KnockoutPageProps> = ({
                         {renderFlag(t1Name, t1Info.flag, "w-4.5 h-3 object-cover rounded shadow-sm shrink-0")}
                       </div>
 
-                      <div className="flex flex-col items-center justify-center min-w-[3rem] h-8 rounded-full bg-white text-black font-black text-[9px] shadow-md shrink-0 mx-1 px-1.5 select-none leading-tight">
-                        {hasScore ? (
+                      <div className={`flex flex-col items-center justify-center min-w-[3.5rem] h-9 rounded-full font-black text-[9px] shadow-md shrink-0 mx-1 px-1.5 select-none leading-tight border transition-all ${
+                        match.status === 'live'
+                          ? 'bg-red-600 text-white border-red-500 animate-pulse'
+                          : 'bg-white text-black border-transparent'
+                      }`}>
+                        {match.status === 'live' ? (
                           <>
-                            <span>{match.score1}-{match.score2}</span>
+                            <span className="text-xs font-black">{match.score1 !== null ? match.score1 : 0}-{match.score2 !== null ? match.score2 : 0}</span>
+                            <span className="text-[5.5px] text-red-100 font-extrabold uppercase tracking-tight animate-pulse mt-0.5">Đang diễn ra</span>
+                          </>
+                        ) : match.status === 'finished' || hasScore ? (
+                          <>
+                            <span className="text-xs font-black">{match.score1}-{match.score2}</span>
                             {match.homePenalty !== null && match.awayPenalty !== null ? (
                               <span className="text-[7px] text-gray-500 font-medium">({match.homePenalty}-{match.awayPenalty} p)</span>
                             ) : (
@@ -193,7 +202,7 @@ export const KnockoutPage: React.FC<KnockoutPageProps> = ({
                             )}
                           </>
                         ) : (
-                          <span>{match.time}</span>
+                          <span className="text-xs font-black">{match.time}</span>
                         )}
                       </div>
 

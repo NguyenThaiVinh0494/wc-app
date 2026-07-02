@@ -118,6 +118,7 @@ export default function App(): JSX.Element {
   const [modalPenalty1, setModalPenalty1] = useState<string>('')
   const [modalPenalty2, setModalPenalty2] = useState<string>('')
   const [modalIsExtraTime, setModalIsExtraTime] = useState<boolean>(false)
+  const [modalStatus, setModalStatus] = useState<'notstarted' | 'live' | 'finished'>('notstarted')
 
   useEffect(() => {
     if (editingMatch) {
@@ -126,6 +127,7 @@ export default function App(): JSX.Element {
       setModalPenalty1(editingMatch.homePenalty !== null && editingMatch.homePenalty !== undefined ? String(editingMatch.homePenalty) : '')
       setModalPenalty2(editingMatch.awayPenalty !== null && editingMatch.awayPenalty !== undefined ? String(editingMatch.awayPenalty) : '')
       setModalIsExtraTime(editingMatch.isExtraTime || false)
+      setModalStatus(editingMatch.status || (editingMatch.score1 !== null && editingMatch.score2 !== null ? 'finished' : 'notstarted'))
     }
   }, [editingMatch])
 
@@ -926,6 +928,8 @@ export default function App(): JSX.Element {
           setModalPenalty2={setModalPenalty2}
           modalIsExtraTime={modalIsExtraTime}
           setModalIsExtraTime={setModalIsExtraTime}
+          modalStatus={modalStatus}
+          setModalStatus={setModalStatus}
           role={role}
           handleSaveScore={handleSaveScore}
         />
