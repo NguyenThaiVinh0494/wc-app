@@ -59,11 +59,13 @@ app.put('/api/matches/:id', async (req, res) => {
       const s2 = score2 !== null ? Number(score2) : null
       const p1 = req.body.homePenalty !== null && req.body.homePenalty !== undefined ? Number(req.body.homePenalty) : null
       const p2 = req.body.awayPenalty !== null && req.body.awayPenalty !== undefined ? Number(req.body.awayPenalty) : null
+      const isExtraTime = req.body.isExtraTime !== null && req.body.isExtraTime !== undefined ? Boolean(req.body.isExtraTime) : null
       
       db.knockout.matches[matchIndex].score1 = s1
       db.knockout.matches[matchIndex].score2 = s2
       db.knockout.matches[matchIndex].homePenalty = p1
       db.knockout.matches[matchIndex].awayPenalty = p2
+      db.knockout.matches[matchIndex].isExtraTime = isExtraTime
 
       // Automatically determine winner if score is decisive
       if (s1 !== null && s2 !== null) {
@@ -387,6 +389,13 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
         const nextScore2 = isNotStarted ? null : awayScore
         const nextHomePenalty = isNotStarted ? null : (apiG.home_penalty_score !== null && apiG.home_penalty_score !== undefined && apiG.home_penalty_score !== 'null' ? Number(apiG.home_penalty_score) : null)
         const nextAwayPenalty = isNotStarted ? null : (apiG.away_penalty_score !== null && apiG.away_penalty_score !== undefined && apiG.away_penalty_score !== 'null' ? Number(apiG.away_penalty_score) : null)
+        const nextIsExtraTime = isNotStarted ? null : (
+          apiG.time_elapsed === 'aet' || 
+          apiG.status === 'aet' || 
+          apiG.extra_time === true || 
+          apiG.extra_time === 'TRUE' || 
+          (nextHomePenalty !== null && nextAwayPenalty !== null)
+        )
 
         const nextHomeScorers = apiG.home_scorers && apiG.home_scorers !== 'null' ? String(apiG.home_scorers) : null
         const nextAwayScorers = apiG.away_scorers && apiG.away_scorers !== 'null' ? String(apiG.away_scorers) : null
@@ -401,7 +410,8 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
           match.awayScorers !== nextAwayScorers ||
           match.stadiumId !== nextStadiumId ||
           match.homePenalty !== nextHomePenalty ||
-          match.awayPenalty !== nextAwayPenalty
+          match.awayPenalty !== nextAwayPenalty ||
+          match.isExtraTime !== nextIsExtraTime
         ) {
           match.team1 = nextTeam1
           match.team2 = nextTeam2
@@ -412,6 +422,7 @@ async function performSyncExternalScores(): Promise<{ success: boolean; updatedC
           match.stadiumId = nextStadiumId
           match.homePenalty = nextHomePenalty
           match.awayPenalty = nextAwayPenalty
+          match.isExtraTime = nextIsExtraTime
           updatedCount++
         }
 

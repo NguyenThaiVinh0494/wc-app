@@ -77,6 +77,9 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
                 {hasPenalties && (
                   <span className="text-[9px] opacity-80 font-normal ml-0.5">({homePenalty})</span>
                 )}
+                {!hasPenalties && match?.isExtraTime && (
+                  <span className="text-[8px] text-yellow-400 font-extrabold ml-0.5" title="Hiệp phụ">(HP)</span>
+                )}
               </span>
             )}
           </div>
@@ -104,6 +107,9 @@ export const MatchBox: React.FC<MatchBoxProps> = ({
                 {score2}
                 {hasPenalties && (
                   <span className="text-[9px] opacity-80 font-normal ml-0.5">({awayPenalty})</span>
+                )}
+                {!hasPenalties && match?.isExtraTime && (
+                  <span className="text-[8px] text-yellow-400 font-extrabold ml-0.5" title="Hiệp phụ">(HP)</span>
                 )}
               </span>
             )}

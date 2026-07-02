@@ -23,6 +23,7 @@ export interface GroupMatch {
   stadiumId?: string | null
   homePenalty?: number | null
   awayPenalty?: number | null
+  isExtraTime?: boolean | null
 }
 
 const createTeam = (name: string): Team => ({

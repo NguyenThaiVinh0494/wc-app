@@ -117,6 +117,7 @@ export default function App(): JSX.Element {
   const [modalScore2, setModalScore2] = useState<string>('')
   const [modalPenalty1, setModalPenalty1] = useState<string>('')
   const [modalPenalty2, setModalPenalty2] = useState<string>('')
+  const [modalIsExtraTime, setModalIsExtraTime] = useState<boolean>(false)
 
   useEffect(() => {
     if (editingMatch) {
@@ -124,6 +125,7 @@ export default function App(): JSX.Element {
       setModalScore2(editingMatch.score2 !== null ? String(editingMatch.score2) : '')
       setModalPenalty1(editingMatch.homePenalty !== null && editingMatch.homePenalty !== undefined ? String(editingMatch.homePenalty) : '')
       setModalPenalty2(editingMatch.awayPenalty !== null && editingMatch.awayPenalty !== undefined ? String(editingMatch.awayPenalty) : '')
+      setModalIsExtraTime(editingMatch.isExtraTime || false)
     }
   }, [editingMatch])
 
@@ -495,7 +497,8 @@ export default function App(): JSX.Element {
     s1: number | null, 
     s2: number | null, 
     p1: number | null = null, 
-    p2: number | null = null
+    p2: number | null = null,
+    isExtraTime: boolean | null = null
   ) => {
     if (matchId.startsWith('gm')) {
       setGroupMatches(prev => {
@@ -505,7 +508,7 @@ export default function App(): JSX.Element {
       })
     } else {
       setKnockoutMatches(prev => {
-        const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2, homePenalty: p1, awayPenalty: p2 } : m)
+        const next = prev.map(m => m.id === matchId ? { ...m, score1: s1, score2: s2, homePenalty: p1, awayPenalty: p2, isExtraTime: isExtraTime } : m)
         localStorage.setItem('wc2026_knockoutMatches', JSON.stringify(next))
         return next
       })
@@ -538,7 +541,7 @@ export default function App(): JSX.Element {
     fetch(`/api/matches/${matchId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ score1: s1, score2: s2, homePenalty: p1, awayPenalty: p2 })
+      body: JSON.stringify({ score1: s1, score2: s2, homePenalty: p1, awayPenalty: p2, isExtraTime: isExtraTime })
     })
     .then(res => res.json())
     .then(data => {
@@ -921,6 +924,8 @@ export default function App(): JSX.Element {
           setModalPenalty1={setModalPenalty1}
           modalPenalty2={modalPenalty2}
           setModalPenalty2={setModalPenalty2}
+          modalIsExtraTime={modalIsExtraTime}
+          setModalIsExtraTime={setModalIsExtraTime}
           role={role}
           handleSaveScore={handleSaveScore}
         />

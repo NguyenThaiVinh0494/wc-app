@@ -14,8 +14,10 @@ interface MatchModalProps {
   setModalPenalty1: (val: string) => void
   modalPenalty2: string
   setModalPenalty2: (val: string) => void
+  modalIsExtraTime: boolean
+  setModalIsExtraTime: (val: boolean) => void
   role: 'admin' | 'guest' | null
-  handleSaveScore: (matchId: string, s1: number | null, s2: number | null, p1: number | null, p2: number | null) => void
+  handleSaveScore: (matchId: string, s1: number | null, s2: number | null, p1: number | null, p2: number | null, isExtraTime: boolean | null) => void
 }
 
 export const MatchModal: React.FC<MatchModalProps> = ({
@@ -29,6 +31,8 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   setModalPenalty1,
   modalPenalty2,
   setModalPenalty2,
+  modalIsExtraTime,
+  setModalIsExtraTime,
   role,
   handleSaveScore
 }) => {
@@ -119,6 +123,29 @@ export const MatchModal: React.FC<MatchModalProps> = ({
             </div>
           </div>
 
+          {isKnockout && (isAdmin ? (modalScore1 !== '' && modalScore2 !== '') : (editingMatch.score1 !== null && editingMatch.score2 !== null)) && (
+            <div className="flex flex-col items-center gap-2 border-t border-white/5 pt-4 w-full">
+              {isAdmin ? (
+                <label className="flex items-center gap-2 text-xs font-bold text-gray-300 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isTie ? true : modalIsExtraTime}
+                    disabled={isTie}
+                    onChange={(e) => setModalIsExtraTime(e.target.checked)}
+                    className="w-4 h-4 accent-green-500 rounded border-gray-700 bg-black/40 outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  Có Hiệp Phụ (AET)
+                </label>
+              ) : (
+                (editingMatch.isExtraTime || (editingMatch.homePenalty !== null && editingMatch.awayPenalty !== null)) && (
+                  <span className="text-[9px] uppercase font-black text-amber-500 tracking-widest bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">
+                    Có Hiệp Phụ (AET)
+                  </span>
+                )
+              )}
+            </div>
+          )}
+
           {isKnockout && isTie && (
             <div className="flex flex-col items-center gap-2 border-t border-white/5 pt-4 w-full">
               <span className="text-[10px] uppercase font-extrabold text-yellow-500 tracking-widest">LUÂN LƯU (PENALTIES)</span>
@@ -173,7 +200,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
               <>
                 <button
                   onClick={() => {
-                    handleSaveScore(editingMatch.id, null, null, null, null)
+                    handleSaveScore(editingMatch.id, null, null, null, null, null)
                     setEditingMatch(null)
                   }}
                   className="px-4 py-2.5 border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-400 rounded-lg text-xs font-bold transition-all"
@@ -192,7 +219,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                     const s2 = modalScore2 === '' ? null : Number(modalScore2)
                     const p1 = modalPenalty1 === '' ? null : Number(modalPenalty1)
                     const p2 = modalPenalty2 === '' ? null : Number(modalPenalty2)
-                    handleSaveScore(editingMatch.id, s1, s2, p1, p2)
+                    handleSaveScore(editingMatch.id, s1, s2, p1, p2, isTie ? true : modalIsExtraTime)
                     setEditingMatch(null)
                   }}
                   className="px-5 py-2.5 bg-green-500 hover:bg-green-400 text-black font-extrabold rounded-lg text-xs transition-all shadow-md shadow-green-500/20"

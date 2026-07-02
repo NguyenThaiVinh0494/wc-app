@@ -184,8 +184,12 @@ export const KnockoutPage: React.FC<KnockoutPageProps> = ({
                         {hasScore ? (
                           <>
                             <span>{match.score1}-{match.score2}</span>
-                            {match.homePenalty !== null && match.awayPenalty !== null && (
+                            {match.homePenalty !== null && match.awayPenalty !== null ? (
                               <span className="text-[7px] text-gray-500 font-medium">({match.homePenalty}-{match.awayPenalty} p)</span>
+                            ) : (
+                              match.isExtraTime && (
+                                <span className="text-[7px] text-amber-500 font-black uppercase">HP</span>
+                              )
                             )}
                           </>
                         ) : (
